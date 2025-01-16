@@ -94,3 +94,28 @@ docker logs pwallet-container
 ## License
 
 This project is licensed under the UnLicense.org
+
+## Screenshots
+<img src="https://github.com/user-attachments/assets/44ed7c38-fbd0-48fd-94a4-f73d4d2a1dcc" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/cc9bfdac-ede0-4848-ad01-db09baf02bb1" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/021b9782-18b7-4598-8c4c-d6acf07d4135" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/96837bac-b2e3-43fd-9e78-cdb2ba39a807" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/a9681319-ff32-4c66-904a-6e21a168591d" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/7b555654-224b-439f-9e69-92b1bd95e3c6" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/27b66971-d121-4973-92b5-9d76a020521c" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/706ff42a-6504-4d35-b79b-f439b77c9ee3" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/079649bd-2377-45d1-a760-a637a31dfe5a" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/97740d29-a68d-46b2-9d6e-ea47b0050fd1" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/5d1de241-3d54-4488-a64f-4f8c14d9d904" alt="image" width="200">
+<img src="https://github.com/user-attachments/assets/6192d5e3-4958-444b-9c9d-228142f4a2ac" alt="image" width="200">
+
+
+
+
+
+
+
+
+
+
+
