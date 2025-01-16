@@ -1,0 +1,48 @@
+﻿@inherits LayoutComponentBase
+
+@inject IJSRuntime Js
+@inject NavigationManager NavigationManager
+
+<div class="page">
+	<div class="sidebar" id="sidebar">
+		<NavMenu />
+	</div>
+
+	<main>
+		<div class="top-row">
+			<button class="navbar-toggler" type="button" id="hamburger-menu" aria-label="Toggle navigation" onclick="toggleNavMenu()">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="title clickable" @onclick="() => ReloadUi()">pWallet</div>
+		</div>
+
+		<article class="content" onclick="closeNavMenu(event)">
+			@Body
+		</article>
+
+		<div class="bottom-row">
+			<div class="footer-text">Made by <span class="bitcoin-orange clickable" @onclick="GoToX">Hodladi</span></div>
+		</div>
+	</main>
+</div>
+
+@code {
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await Js.InvokeVoidAsync("addNavLinkClickListener");
+		}
+	}
+
+	private void ReloadUi()
+	{
+		NavigationManager.NavigateTo("/", forceLoad: true);
+	}
+
+	private async Task GoToX()
+	{
+		await Js.InvokeVoidAsync("open", "https://x.com/hodladi", "_blank");
+	}
+}

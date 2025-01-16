@@ -1,0 +1,122 @@
+﻿@using pWallet.Models
+@using pWallet.Enums
+@using pWallet.Utilities
+@inject IJSRuntime JsRuntime
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">Pay Invoice</h4>
+
+		<div class="input-container">
+			<textarea @ref="_inputRef" class="form-control" placeholder="Lightning invoice or address"
+					  @bind="_inputData" @oninput="HandleInputChange"></textarea>
+		</div>
+
+		<div class="button-row">
+			@if (string.IsNullOrWhiteSpace(_inputData))
+			{
+				<button class="btn btn-outline-info" @onclick="PasteClipboard">
+					<span class="bi bi-clipboard me-2"></span> Paste
+				</button>
+				<button class="btn btn-outline-secondary" @onclick="ScanQrCode">
+					<span class="bi bi-camera me-2"></span> Scan
+				</button>
+			}
+			else
+			{
+				<button class="btn btn-outline-info" @onclick="SubmitInput">
+					<span class="bi bi-play-circle me-2"></span> Go
+				</button>
+				<button class="btn btn-outline-secondary" @onclick="ClearInput">
+					<span class="bi bi-file-earmark-x me-2"></span> Clear
+				</button>
+			}
+			<button class="btn btn-outline-danger" @onclick="CloseModal">
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+<QrScannerModal @ref="_qrScannerModalRef" OnQrScanned="HandleQrScanned" />
+<NotificationModal @ref="_notificationModal" />
+
+@code {
+	[Parameter] public EventCallback<InvoiceSubmission> OnSubmit { get; set; }
+
+	private NotificationModal? _notificationModal;
+
+	private bool _isVisible;
+	private string _inputData = string.Empty;
+	private InvoiceType _currentType = InvoiceType.Unknown;
+
+	private ElementReference _inputRef;
+
+	public async void Show()
+	{
+		_isVisible = true;
+		StateHasChanged();
+	}
+
+	public void Hide() => _isVisible = false;
+
+	private void ClearInput()
+	{
+		_inputData = string.Empty;
+		_currentType = InvoiceType.Unknown;
+	}
+
+	private void HandleInputChange(ChangeEventArgs e)
+	{
+		_inputData = e.Value?.ToString() ?? string.Empty;
+		_currentType = InvoiceTypeUtility.DetermineInvoiceType(_inputData);
+	}
+
+	private async Task SubmitInput()
+	{
+		if (!string.IsNullOrWhiteSpace(_inputData))
+		{
+			var submission = new InvoiceSubmission
+				{
+					Invoice = _inputData,
+					Type = _currentType
+				};
+
+			await OnSubmit.InvokeAsync(submission);
+			ClearInput();
+			_isVisible = false;
+		}
+	}
+
+	private async Task PasteClipboard()
+	{
+		_inputData = await JsRuntime.InvokeAsync<string>("navigator.clipboard.readText");
+		StateHasChanged();
+	}
+
+	private Task CloseModal()
+	{
+		ClearInput();
+		_isVisible = false;
+		return Task.CompletedTask;
+	}
+
+	private QrScannerModal? _qrScannerModalRef;
+
+	private Task ScanQrCode()
+	{
+		Hide();
+		_qrScannerModalRef?.Show();
+		return Task.CompletedTask;
+	}
+
+	private async Task HandleQrScanned(string invoice)
+	{
+		_inputData = invoice;
+
+		var scannedData = _inputData.StartsWith("lightning:") ? _inputData.Substring("lightning:".Length) : _inputData;
+		_currentType = InvoiceTypeUtility.DetermineInvoiceType(scannedData);
+
+		Show();
+	}
+}

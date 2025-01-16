@@ -1,0 +1,91 @@
+﻿@using pWallet.Enums
+@using pWallet.Models
+
+@inject IJSRuntime JsRuntime
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")">
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">Invoice Details</h4>
+
+		@if (Submission.Type == InvoiceType.Bolt11Invoice && DecodedInvoice != null)
+		{
+			<div>
+				<input type="text" class="form-control" @bind="DecodedInvoice.Address" disabled />
+				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="DecodedInvoice.Amount" disabled />
+			</div>
+		}
+		else if (Submission.Type == InvoiceType.OnChainAddress && DecodedInvoice != null)
+		{
+			<div>
+				<input type="text" class="form-control" value="@DecodedInvoice.OnChainAddress" disabled />
+				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="@DecodedInvoice.Amount" placeholder="Amount sats" />
+				<input type="number" class="form-control mt-3" @bind="@DecodedInvoice.FeeRateOnChain" placeholder="Fee sat/vB"/>
+			</div>
+		}
+		else if (Submission.Type == InvoiceType.Lnurl || Submission.Type == InvoiceType.LightningAddress || Submission.Type == InvoiceType.Bolt12Offer)
+		{
+			<div>
+				<input type="text" class="form-control" value="@DecodedInvoice?.Address" disabled />
+				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="DecodedInvoice!.Amount" placeholder="Amount (Sats)" />
+				<input type="text" class="form-control mt-3" @bind="DecodedInvoice!.Description" placeholder="Message" />
+			</div>
+		}
+		else
+		{
+			<p>Unsupported invoice type</p>
+		}
+
+		<div class="button-row mt-3">
+			<button class="btn btn-primary" @onclick="SubmitInvoice">
+				<i class="bi bi-currency-bitcoin">Pay</i>
+			</button>
+			<button class="btn btn-outline-danger" @onclick="CloseModal">
+				Cancel
+			</button>
+		</div>
+	</div>
+</div>
+
+@code {
+	private bool _isVisible;
+	private long? _onChainAmount;
+	private long? _lnUrlAmount;
+
+	[Parameter] public InvoiceSubmission Submission { get; set; }
+	[Parameter] public DecodeInvoiceResponse DecodedInvoice { get; set; }
+	[Parameter] public EventCallback<string> OnSubmit { get; set; }
+
+	private ElementReference _amountInput;
+
+	public async void Show()
+	{
+		_isVisible = true;
+		await Task.Delay(100);
+		StateHasChanged();
+	}
+
+	public void Hide()
+	{
+		_isVisible = false;
+		_onChainAmount = null;
+		_lnUrlAmount = null;
+	}
+
+	private async Task SubmitInvoice()
+	{
+		Hide();
+		if (Submission.Type == InvoiceType.OnChainAddress)
+		{
+		await OnSubmit.InvokeAsync("OnChain Transaction successfully processed");
+		}
+		else
+		{
+		await OnSubmit.InvokeAsync("Invoice processed successfully.");
+		}
+	}
+
+	private void CloseModal()
+	{
+		Hide();
+	}
+}

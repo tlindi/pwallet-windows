@@ -1,0 +1,268 @@
+﻿@page "/"
+@using System.Text.Json
+@using pWallet.Enums
+@using pWallet.Interfaces
+@using pWallet.Models
+@using pWallet.Services
+
+@inject INodeService NodeService
+@inject IPaymentService PaymentService
+@inject WebSocketService WebSocketService
+@inject ConfigurationService ConfigurationService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Home</PageTitle>
+
+@if (IsLoading)
+{
+	<div class="center-content">
+		<div class="spinner-border text-warning" role="status">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+}
+else if (ShowConfigurationPrompt)
+{
+	<ConfigurationPrompt />
+}
+else
+{
+	<div class="center-content">
+		<span class="h1-custom">
+			<span>@(Type == "sats" ? BalanceSat.ToString("N0", System.Globalization.CultureInfo.InvariantCulture).Replace(",", " ") : $"{BalanceSat:F8}")</span>
+			<span class="bitcoin-orange clickable" @onclick="ChangeType">@Type</span>
+		</span>
+		<div class="mt-2 button-container">
+			<button class="btn btn-outline-primary button-width" @onclick="ShowSendModal">Send</button>
+			<button class="btn btn-outline-primary button-width" @onclick="ShowReceiveModal">Receive</button>
+		</div>
+	</div>
+
+	<NotificationModal @ref="_notificationModal" WhenShown="ReloadUi" />
+
+	<Bolt11CreateInvoiceModal @ref="_createInvoiceModal" OnInvoiceCreated="Bolt11ShowInvoiceModal" Bolt12Modal="_bolt12InvoiceModal" />
+	<Bolt11ShowInvoiceModal @ref="_bolt11InvoiceModal" />
+	<Bolt12ShowInvoiceModal @ref="_bolt12InvoiceModal" />
+
+	<SendModal @ref="_sendModal" OnSubmit="HandleInvoice" />
+	<SendFormModal @ref="_sendWithInputModal" />
+	<WalletInvoiceModal @ref="_invoiceModalRef" Submission="Submission" DecodedInvoice="_decodedInvoice" OnSubmit="HandleInvoiceSubmit" />
+}
+
+@code {
+	private NotificationModal? _notificationModal;
+	private Bolt11CreateInvoiceModal? _createInvoiceModal;
+	private Bolt11ShowInvoiceModal? _bolt11InvoiceModal;
+	private Bolt12ShowInvoiceModal? _bolt12InvoiceModal;
+	private SendModal? _sendModal;
+	private SendFormModal? _sendWithInputModal;
+	private DecodeInvoiceResponse? _decodedInvoice;
+	private WalletInvoiceModal? _invoiceModalRef;
+
+	private bool IsLoading { get; set; } = true;
+	private double BalanceSat { get; set; }
+	private bool ShowConfigurationPrompt { get; set; }
+	private InvoiceSubmission Submission { get; set; } = new();
+
+
+	private string Type { get; set; } = "sats";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			try
+			{
+				await WebSocketService.StartWebSocketAsync();
+				var apiUrl = await ConfigurationService.GetNormalizedApiUrlAsync();
+				await ConnectToSse(apiUrl);
+				WebSocketService.AddMessageHandler(apiUrl, OnWebSocketMessageReceived);
+				var balanceResponse = await NodeService.GetBalanceAsync();
+
+				if (balanceResponse != null)
+				{
+					BalanceSat = balanceResponse.BalanceSat;
+				}
+				else
+				{
+					Console.WriteLine("Failed to fetch balance.");
+				}
+
+				IsLoading = false;
+				StateHasChanged();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error: {ex.Message}");
+				ShowConfigurationPrompt = true;
+				IsLoading = false;
+				StateHasChanged();
+			}
+		}
+	}
+
+	private async Task ConnectToSse(string normalizedKey)
+	{
+		try
+		{
+			var module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/sse.js");
+			await module.InvokeVoidAsync("connectToSse", $"/api/sse/{normalizedKey}", DotNetObjectReference.Create(this));
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Failed to connect to SSE: {ex.Message}");
+		}
+	}
+
+	private void OnWebSocketMessageReceived(string message)
+	{
+	}
+
+	[JSInvokable]
+	public async Task OnSseMessageReceived(string message)
+	{
+		try
+		{
+			var paymentData = JsonSerializer.Deserialize<PaymentReceivedMessage>(message);
+			if (paymentData?.Type == "payment_received")
+			{
+				if (_bolt11InvoiceModal?.IsVisible == true)
+				{
+					_bolt11InvoiceModal.CloseModal();
+				}
+
+				if (_bolt12InvoiceModal?.IsVisible == true)
+				{
+					_bolt12InvoiceModal.CloseModal();
+				}
+
+				await _notificationModal?.Show("Payment Received", $"You just got paid {paymentData.AmountSat} sats")!;
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Failed to parse SSE message: {ex.Message}");
+		}
+	}
+
+	private void ReloadUi()
+	{
+		NavigationManager.NavigateTo("/", forceLoad: true);
+	}
+
+	private void ChangeType()
+	{
+		if (Type == "sats")
+		{
+			BalanceSat = BalanceSat / 100_000_000;
+			Type = "BTC";
+		}
+		else
+		{
+			BalanceSat = Math.Round(BalanceSat * 100_000_000);
+			Type = "sats";
+		}
+	}
+	private void ShowReceiveModal() => _createInvoiceModal?.Show();
+	private void ShowSendModal() => _sendModal?.Show();
+
+	private void Bolt11ShowInvoiceModal(Bolt11InvoiceResponse invoice)
+	{
+		_bolt11InvoiceModal?.Show(invoice);
+	}
+
+	private async Task HandleInvoice(InvoiceSubmission submission)
+	{
+		await HandleInputSubmitted(submission);
+	}
+
+	private async Task HandleInputSubmitted(InvoiceSubmission submission)
+	{
+		// ResetView();
+
+		if (submission.Type == InvoiceType.Bolt11Invoice)
+		{
+			_decodedInvoice = await NodeService.DecodeInvoiceAsync(new DecodeInvoiceRequest { Invoice = submission.Invoice });
+
+			if (_decodedInvoice == null || _decodedInvoice.Amount == null)
+			{
+				return;
+			}
+		}
+		else if (submission.Type == InvoiceType.OnChainAddress)
+		{
+			_decodedInvoice = new DecodeInvoiceResponse { OnChainAddress = submission.Invoice };
+		}
+		else if (submission.Type == InvoiceType.Lnurl || submission.Type == InvoiceType.LightningAddress || submission.Type == InvoiceType.Bolt12Offer)
+		{
+
+			_decodedInvoice = new DecodeInvoiceResponse
+				{
+					Address = submission.Invoice,
+					Amount = null
+
+				};
+		}
+		else
+		{
+			_decodedInvoice = new DecodeInvoiceResponse();
+		}
+
+		if (_decodedInvoice != null)
+		{
+			Submission = submission;
+			_invoiceModalRef?.Show();
+		}
+		else
+		{
+			Console.WriteLine("Failed to decode invoice.");
+		}
+	}
+
+	private async Task HandleInvoiceSubmit(string message)
+	{
+		if (_decodedInvoice != null)
+		{
+			try
+			{
+				var response = await PaymentService.ProcessPaymentAsync(Submission.Type, Submission.Invoice, _decodedInvoice);
+				if (response != null)
+				{
+					if (Submission.Type == InvoiceType.OnChainAddress)
+					{
+						await _notificationModal?.Show(
+							"On chain transaction successful!",
+							$"https://mempool.space/tx/{response.TxId}",
+								true
+						)!;
+					}
+					else
+					{
+						await _notificationModal?.Show(
+							"Payment Successful!",
+							$"You paid {response.RecipientAmountSat} sats with a fee of {response.RoutingFeeSat} sats."
+						)!;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				await _notificationModal?.Show(
+					"Payment Failed!",
+					$"Error: {ex.Message}"
+				)!;
+			}
+		}
+		else
+		{
+			await _notificationModal?.Show(
+				"Payment Failed!",
+				"Invalid invoice data. Unable to process payment."
+			)!;
+		}
+
+		// ResetView();
+	}
+
+}

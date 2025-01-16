@@ -1,0 +1,55 @@
+﻿
+<div class="modal-backdrop-qr" style="display: @(_isVisible ? "flex" : "none")">
+	<div class="modal-content-qr" @onclick:stopPropagation>
+		<div class="qr-scanner-container">
+			<QrScanner @ref="QrScannerRef" OnQrScanned="HandleQrScanned" />
+		</div>
+		<button class="floating-close-btn" @onclick="CloseModal">
+			<span class="bi bi-x-circle me-2"></span> Close
+		</button>
+	</div>
+</div>
+
+@code {
+	private bool _isVisible;
+	private QrScanner? QrScannerRef;
+
+	[Parameter] public EventCallback<string> OnQrScanned { get; set; }
+
+	public async void Show()
+	{
+		_isVisible = true;
+		StateHasChanged();
+
+		await Task.Delay(100);
+		if (QrScannerRef != null)
+		{
+			await QrScannerRef.StartScanner();
+		}
+	}
+
+	public async Task Hide()
+	{
+		_isVisible = false;
+		StateHasChanged();
+
+		if (QrScannerRef != null)
+		{
+			await QrScannerRef.StopScanner();
+		}
+	}
+
+	private async Task HandleQrScanned(string result)
+	{
+		await Hide();
+		if (OnQrScanned.HasDelegate)
+		{
+			await OnQrScanned.InvokeAsync(result);
+		}
+	}
+
+	private async Task CloseModal()
+	{
+		await Hide();
+	}
+}

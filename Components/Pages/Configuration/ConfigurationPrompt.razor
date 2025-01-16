@@ -1,0 +1,73 @@
+﻿@page "/configuration-prompt"
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Configuration Prompt</PageTitle>
+
+@if (IsLoading)
+{
+    <div class="center-content">
+        <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="center-content">
+        <h2>Configuration</h2>
+        <EditForm Model="@this" OnValidSubmit="SaveConfiguration">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+                <label for="url" class="form-label">API URL</label>
+                <InputText id="url" class="form-control" @bind-Value="ApiUrl" />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">API Password</label>
+                <InputText id="password" class="form-control" type="password" @bind-Value="ApiPassword" />
+            </div>
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn-outline-primary">Save</button>
+                <button type="button" class="btn btn-outline-danger" @onclick="ResetConfiguration">Reset</button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private string? ApiUrl { get; set; }
+    private string? ApiPassword { get; set; }
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ApiUrl = await JsRuntime.InvokeAsync<string>("localStorage.getItem", new object[] { "apiUrl" });
+            ApiPassword = await JsRuntime.InvokeAsync<string>("localStorage.getItem", new object[] { "apiPassword" });
+
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveConfiguration()
+    {
+        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "apiUrl", ApiUrl);
+        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "apiPassword", ApiPassword);
+
+        NavigationManager.NavigateTo("/", true);
+    }
+
+    private async Task ResetConfiguration()
+    {
+        await JsRuntime.InvokeVoidAsync("localStorage.removeItem", "apiUrl");
+        await JsRuntime.InvokeVoidAsync("localStorage.removeItem", "apiPassword");
+
+        ApiUrl = null;
+        ApiPassword = null;
+
+        NavigationManager.NavigateTo("/", true);
+    }
+}

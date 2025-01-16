@@ -1,0 +1,89 @@
+﻿@page "/transactions"
+
+@using pWallet.Extensions
+@using pWallet.Interfaces
+@using pWallet.Models
+@inject IPaymentService PhoenixService
+
+<div class="content-placement container-responsive">
+    <h3>Payment History</h3>
+
+    @if (Payments == null)
+    {
+        <p>Loading payments...</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead class="table-transactions">
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Fee</th>
+                </tr>
+            </thead>
+            <tbody class="table-transactions">
+                @foreach (var payment in Payments)
+                {
+                    <tr>
+                        <td>@payment.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <span class="@(payment.Type == "Incoming" ? "text-success" : "text-danger")">
+                                <i class="@(payment.Type == "Incoming" ? "bi bi-arrow-down-circle" : "bi bi-arrow-up-circle")"></i>
+                            </span>
+                        </td>
+                        <td>@payment.Amount</td>
+                        <td>@(payment.Fee > 0 ? payment.Fee.ToString() : "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<PaymentEntry>? Payments;
+    private bool _isInitialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isInitialized)
+        {
+            _isInitialized = true;
+            await LoadPaymentsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPaymentsAsync()
+    {
+        try
+        {
+            var incoming = await PhoenixService.GetIncomingPaymentsAsync();
+            var outgoing = await PhoenixService.GetOutgoingPaymentsAsync();
+
+            Payments = incoming.Select(p => new PaymentEntry
+                {
+                    Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
+                    Type = "Incoming",
+                    Amount = p.ReceivedSat,
+                    Fee = 0
+                }).ToList();
+
+            Payments.AddRange(outgoing.Select(p => new PaymentEntry
+                {
+                    Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
+                    Type = "Outgoing",
+                    Amount = p.Sent - p.Fees.ToSats(),
+                    Fee = p.Fees.ToSats()
+                }));
+
+            Payments = Payments.OrderByDescending(p => p.Date).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading payments: {ex.Message}");
+        }
+    }
+}

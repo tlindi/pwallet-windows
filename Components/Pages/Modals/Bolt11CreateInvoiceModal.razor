@@ -1,0 +1,69 @@
+﻿@using pWallet.Interfaces
+@using pWallet.Models
+@using pWallet.Services
+
+@inject IPaymentService PhoenixService
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">Create Invoice</h4>
+		<form @onsubmit="HandleSubmit">
+			<div class="form-group">
+				<label for="amountSat">Amount (Sat)</label>
+				<input type="number" id="amountSat" class="form-control" @bind="AmountSat" required />
+			</div>
+			<div class="form-group">
+				<label for="description">Description</label>
+				<input type="text" id="description" class="form-control" @bind="Description" maxlength="128" />
+			</div>
+			<div class="button-row">
+				<button type="submit" class="btn btn-outline-secondary mt-3">Create</button>
+				<button type="button" class="btn btn-outline-info mt-3" @onclick="Bolt12">Bolt 12</button>
+				<button type="button" class="btn btn-outline-danger mt-3" @onclick="CloseModal">Cancel</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+@code {
+	private bool _isVisible = false;
+	private string Description { get; set; } = string.Empty;
+	private long? AmountSat { get; set; } = null;
+	private int ExpirySeconds { get; set; } = 3600;
+
+	[Parameter] public EventCallback<Bolt11InvoiceResponse> OnInvoiceCreated { get; set; }
+	[Parameter] public Bolt12ShowInvoiceModal? Bolt12Modal { get; set; }
+
+	public void Show()
+	{
+		_isVisible = true;
+		AmountSat = null;
+		Description = string.Empty;
+	}
+
+	private async Task HandleSubmit()
+	{
+		var request = new Bolt11InvoiceRequest
+			{
+				Description = Description,
+				AmountSat = AmountSat,
+				ExpirySeconds = ExpirySeconds
+			};
+
+		var response = await PhoenixService.CreateInvoiceAsync(request);
+		if (response != null)
+		{
+			await OnInvoiceCreated.InvokeAsync(response);
+		}
+
+		CloseModal();
+	}
+
+	private void Bolt12()
+	{
+		CloseModal();
+		Bolt12Modal?.Show();
+	}
+
+	private void CloseModal() => _isVisible = false;
+}

@@ -1,0 +1,129 @@
+﻿.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 0;
+}
+
+.modal-content {
+    background: white !important;
+    border-radius: 0px 0px 12px 12px !important;
+    color: black;
+    border-radius: 12px;
+    padding: 20px;
+    width: 100% !important;
+    max-width: 500px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+    z-index: 1051;
+}
+
+.modal-title {
+    text-align: left;
+    padding-bottom: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+textarea.form-control {
+    width: 100%;
+    height: 80px;
+    resize: none;
+    padding-right: 40px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.button-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0rem;
+}
+
+    .button-row .btn {
+        flex: 1;
+        margin-right: 10px;
+        border: 1px solid transparent;
+        background: none;
+        color: #FF9900;
+        font-weight: bold;
+        font-size: 1rem;
+        text-align: center;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: border 0.3s ease, color 0.3s ease;
+    }
+
+        .button-row .btn:hover {
+            border-color: #bbb;
+            border-radius: 5px;
+            color: #333;
+            background: none;
+            text-decoration: none;
+        }
+
+        .button-row .btn:last-child {
+            margin-right: 0;
+            color: red;
+        }
+
+            .button-row .btn:last-child:hover {
+                border-color: red;
+                color: darkred;
+                background: none;
+            }
+
+    .button-row .btn-outline-secondary {
+        color: #555;
+    }
+
+    .button-row .btn-outline-info {
+        color: #FF9900
+    }
+
+        .button-row .btn-outline-secondary:hover {
+            border-color: #555;
+            color: #333;
+            background: none;
+        }
+
+    .button-row .btn-outline-danger {
+        color: red;
+    }
+
+        .button-row .btn-outline-danger:hover {
+            border-color: red;
+            color: darkred;
+            background: none;
+        }
+
+textarea.form-control::-webkit-clear-button {
+    display: none;
+}
+
+textarea.form-control {
+    appearance: none;
+}

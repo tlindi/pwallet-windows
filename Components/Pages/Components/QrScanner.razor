@@ -1,0 +1,53 @@
+﻿@inject IJSRuntime JsRuntime
+
+<div class="qr-scanner-container">
+	<video id="qr-video"></video>
+	<div class="qr-guidelines">
+		<div class="top-left-bracket"></div>
+		<div class="top-right-bracket"></div>
+		<div class="bottom-left-bracket"></div>
+		<div class="bottom-right-bracket"></div>
+	</div>
+</div>
+
+@code {
+	private DotNetObjectReference<QrScanner>? _objRef;
+	private bool _isScannerActive = false;
+
+	[Parameter] public EventCallback<string> OnQrScanned { get; set; }
+
+	public async Task StartScanner()
+	{
+		if (!_isScannerActive)
+		{
+			_objRef = DotNetObjectReference.Create(this);
+			await JsRuntime.InvokeVoidAsync("startQrScanner", _objRef);
+			_isScannerActive = true;
+		}
+	}
+
+	[JSInvokable]
+	public async Task HandleQrCodeResult(string result)
+	{
+		await StopScanner();
+
+		if (OnQrScanned.HasDelegate)
+		{
+			await OnQrScanned.InvokeAsync(result.ToLower());
+		}
+	}
+
+	public async Task StopScanner()
+	{
+		if (_isScannerActive)
+		{
+			await JsRuntime.InvokeVoidAsync("stopQrScanner");
+			_isScannerActive = false;
+		}
+	}
+
+	public void Dispose()
+	{
+		_objRef?.Dispose();
+	}
+}

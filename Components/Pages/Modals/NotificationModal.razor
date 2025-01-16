@@ -1,0 +1,68 @@
+﻿@inject NavigationManager NavigationManager
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">@Title</h4>
+
+		@if (StayOpen)
+		{
+			<p>
+				Visit <a href="@Message" title="@Message" target="blank">Mempool</a> to follow your transaction
+				</p>
+			<button class="btn btn-outline-danger mt-3" @onclick="CloseModal">Close</button>
+		}
+		else
+		{
+			<p>@Message</p>
+		}
+	</div>
+</div>
+
+@code {
+	private bool _isVisible;
+	[Parameter] public EventCallback WhenShown { get; set; }
+	[Parameter] public string Title { get; set; } = string.Empty;
+	[Parameter] public string Message { get; set; } = string.Empty;
+	[Parameter] public bool StayOpen { get; set; } = false;
+
+	public async Task Show(string title, string message, bool stayOpen = false)
+	{
+		Title = title;
+		Message = message;
+		StayOpen = stayOpen;
+		_isVisible = true;
+
+		try
+		{
+			StateHasChanged();
+			if (!StayOpen)
+			{
+				await Task.Delay(3000);
+				_isVisible = false;
+				StateHasChanged();
+				await WhenShown.InvokeAsync();
+			}
+			
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error during modal state update: {ex.Message}");
+		}
+	}
+
+	private Task CloseModal()
+	{
+		_isVisible = false;
+
+		try
+		{
+			NavigationManager.NavigateTo("/");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Navigation failed: {ex.Message}");
+		}
+
+		return Task.CompletedTask;
+	}
+}

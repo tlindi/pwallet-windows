@@ -1,0 +1,92 @@
+﻿@using pWallet.Interfaces
+@using pWallet.Models
+@inject INodeService PhoenixService
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
+    <div class="modal-content" @onclick:stopPropagation>
+        <h4 class="modal-title">Close Channel</h4>
+
+        @if (_showResult)
+        {
+            <div>
+                <p><strong>Channel closed successfully!</strong></p>
+                <p><strong>Transaction ID:</strong> <a href="@Mempool">@TxId</a></p>
+                <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+            </div>
+        }
+        else
+        {
+            <form @onsubmit="CloseChannel">
+                <div class="form-group">
+                    <label for="address">Bitcoin Address</label>
+                    <input type="text" id="address" class="form-control" @bind="Address" required />
+                </div>
+                <div class="form-group">
+                    <label for="feerate">Fee Rate (Sat/Vbyte)</label>
+                    <input type="number" id="feerate" class="form-control" @bind="FeerateSatByte" required />
+                </div>
+                <button type="submit" class="btn btn-outline-primary mt-3">Close Channel</button>
+                <button type="button" class="btn btn-outline-danger mt-3" @onclick="CloseModal">Cancel</button>
+            </form>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _isVisible = false;
+    private bool _showResult = false;
+    private string Address { get; set; } = string.Empty;
+    private long FeerateSatByte { get; set; } = 10;
+    private string ChannelId { get; set; } = string.Empty;
+    private string TxId { get; set; } = string.Empty;
+    private string Mempool { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback OnChannelClosed { get; set; }
+
+    public void Show(string channelId)
+    {
+        ChannelId = channelId;
+        _isVisible = true;
+        _showResult = false;
+        StateHasChanged();
+    }
+
+    private async Task CloseChannel()
+    {
+        var request = new CloseChannelRequest
+            {
+                ChannelId = ChannelId,
+                Address = Address,
+                FeerateSatByte = FeerateSatByte
+            };
+
+        try
+        {
+            var response = await PhoenixService.CloseChannelAsync(request);
+            if (response != null)
+            {
+	            TxId = response.TxId;
+                Mempool = $"https://mempool.space/tx/{response.TxId}";
+				_showResult = true;
+                await OnChannelClosed.InvokeAsync();
+            }
+            else
+            {
+                Console.WriteLine("Failed to close channel.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error closing channel: {ex.Message}");
+        }
+    }
+
+    private void CloseModal()
+    {
+        _isVisible = false;
+        Address = string.Empty;
+        FeerateSatByte = 10;
+        TxId = string.Empty;
+        StateHasChanged();
+    }
+}

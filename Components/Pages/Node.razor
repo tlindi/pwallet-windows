@@ -1,0 +1,117 @@
+﻿@page "/node"
+
+@using pWallet.Interfaces
+@using pWallet.Models
+
+@inject INodeService PhoenixService
+
+@if (NodeInfo == null)
+{
+	<p>Loading node information...</p>
+}
+else
+{
+	<div class="node-info wrap-text">
+		<p><strong>Node ID:</strong> @NodeInfo.NodeId</p>
+		<h4>Channels</h4>
+		@if (NodeInfo.Channels.Count == 0)
+		{
+			<p>No channels found.</p>
+		}
+		else
+		{
+			<div class="d-none d-md-block">
+				<!-- Table for larger screens -->
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>State</th>
+							<th>Channel ID</th>
+							<th>Balance (Sat)</th>
+							<th>Inbound Liquidity (Sat)</th>
+							<th>Capacity (Sat)</th>
+							<th>Funding Tx ID</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var channel in NodeInfo.Channels)
+						{
+							<tr>
+								<td>@channel.State</td>
+								<td class="wrap-text">@channel.ChannelId</td>
+								<td>@channel.BalanceSat</td>
+								<td>@channel.InboundLiquiditySat</td>
+								<td>@channel.CapacitySat</td>
+								<td class="wrap-text">@channel.FundingTxId</td>
+								<td>
+									@if (channel.State == "Normal")
+									{
+										<button class="btn btn-outline-danger" @onclick="() => ShowCloseChannelModal(channel.ChannelId)">
+											Close
+										</button>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+
+			<div class="d-block d-md-none">
+				<!-- Cards for smaller screens -->
+				@foreach (var channel in NodeInfo.Channels)
+				{
+					<div class="card mb-5 wrap-text">
+						<div class="card-body">
+							<p><strong>State:</strong> @channel.State</p>
+							<p><strong>Channel ID:</strong> @channel.ChannelId</p>
+							<p><strong>Balance (Sat):</strong> @channel.BalanceSat</p>
+							<p><strong>Inbound Liquidity (Sat):</strong> @channel.InboundLiquiditySat</p>
+							<p><strong>Capacity (Sat):</strong> @channel.CapacitySat</p>
+							<p><strong>Funding Tx ID:</strong> @channel.FundingTxId</p>
+							@if (channel.State == "Normal")
+							{
+								<button class="btn btn-outline-danger" @onclick="() => ShowCloseChannelModal(channel.ChannelId)">
+									Close channel
+								</button>
+							}
+						</div>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
+
+<CloseChannelModal @ref="CloseChannelModal" OnChannelClosed="ReloadNodeInfo" />
+
+@code {
+	private NodeInfoResponse? NodeInfo;
+	private CloseChannelModal? CloseChannelModal;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadNodeInfo();
+	}
+
+	private async Task LoadNodeInfo()
+	{
+		NodeInfo = await PhoenixService.GetNodeInfoAsync();
+		if (NodeInfo == null)
+		{
+			Console.WriteLine("Failed to fetch node info.");
+		}
+	}
+
+	private async Task ReloadNodeInfo()
+	{
+		await LoadNodeInfo();
+		StateHasChanged();
+	}
+
+	private void ShowCloseChannelModal(string channelId)
+	{
+		CloseChannelModal?.Show(channelId);
+	}
+}

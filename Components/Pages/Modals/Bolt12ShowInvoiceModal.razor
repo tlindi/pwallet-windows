@@ -1,0 +1,77 @@
+﻿@using pWallet.Interfaces
+@using pWallet.Models
+@using pWallet.Services
+
+@inject IPaymentService PhoenixService
+@inject IJSRuntime JsRuntime
+
+<div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">Bolt 12 Invoice</h4>
+		@if (_isLoaded)
+		{
+			<span @onclick="CopyAddressToClipboard"><strong>Lightning Address:</strong> @Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
+			<div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard">
+				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
+			</div>
+		}
+		else
+		{
+			<p>Loading...</p>
+		}
+		<button type="button" class="btn btn-secondary mt-3" @onclick="CloseModal">Close</button>
+	</div>
+</div>
+
+@code {
+	private bool _isVisible;
+	private bool _isLoaded;
+	private string? _qrCodeBase64 = string.Empty;
+	public GetBolt12OfferResponse? Bolt12Offer { get; set; } = new();
+	public GetLightningAddressResponse? Bolt12LightninAddress { get; set; } = new();
+
+	[Inject] public QrService QrService { get; set; } = default!;
+
+	public bool IsVisible => _isVisible;
+
+	public async Task Show()
+	{
+		_isVisible = true;
+		Bolt12Offer = await PhoenixService.GetBolt12OfferAsync();
+		Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+
+		_qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer.Offer);
+		_isLoaded = true;
+
+		StateHasChanged();
+	}
+
+	public void CloseModal()
+	{
+		_isVisible = false;
+		StateHasChanged();
+	}
+
+	private async Task CopyOfferToClipboard()
+	{
+		try
+		{
+			if (Bolt12Offer != null && !string.IsNullOrWhiteSpace(Bolt12Offer.Offer))
+			{
+				await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Bolt12Offer.Offer);
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error copying Bolt12 offer to clipboard: {ex.Message}");
+		}
+	}
+
+	private async Task CopyAddressToClipboard()
+	{
+		if (!string.IsNullOrWhiteSpace(Bolt12LightninAddress?.LightningAddress))
+		{
+			await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
+		}
+	}
+}
