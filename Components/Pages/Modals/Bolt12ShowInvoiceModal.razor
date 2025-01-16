@@ -10,8 +10,8 @@
 		<h4 class="modal-title">Bolt 12 Invoice</h4>
 		@if (_isLoaded)
 		{
-			<span @onclick="CopyAddressToClipboard"><strong>Lightning Address:</strong> @Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
-			<div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard">
+			<span @onclick="CopyAddressToClipboard" class="clickable"><strong>Lightning Address:</strong> @Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
+			<div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard" class="clickable">
 				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
 			</div>
 		}
@@ -19,7 +19,15 @@
 		{
 			<p>Loading...</p>
 		}
-		<button type="button" class="btn btn-secondary mt-3" @onclick="CloseModal">Close</button>
+		
+		<div class="button-row mt-3">
+			<button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
+				<span class="bi bi-clipboard me-2"></span> Copy
+			</button>
+			<button class="btn btn-outline-danger" @onclick="CloseModal">
+				<span class="me-2"></span> Close
+			</button>
+		</div>
 	</div>
 </div>
 
