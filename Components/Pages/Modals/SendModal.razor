@@ -91,6 +91,7 @@
 	private async Task PasteClipboard()
 	{
 		_inputData = await JsRuntime.InvokeAsync<string>("navigator.clipboard.readText");
+		_currentType = InvoiceTypeUtility.DetermineInvoiceType(_inputData);
 		StateHasChanged();
 	}
 
