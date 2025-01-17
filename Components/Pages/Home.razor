@@ -7,6 +7,7 @@
 @using pWallet.Services
 
 @inject INodeService NodeService
+@inject IBitcoinPriceService BitcoinPriceService
 @inject IPaymentService PaymentService
 @inject WebSocketService WebSocketService
 @inject ConfigurationService ConfigurationService
@@ -30,9 +31,9 @@ else if (ShowConfigurationPrompt)
 else
 {
 	<div class="center-content">
-			<span @onclick="ChangeType" class="center-content-box clickable">
-			<span class="@(Type == "SATS" && BalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
-				@(Type == "SATS" ? BalanceSat.ToString("N0", CultureInfo.InvariantCulture).Replace(",", " ") : $"{BalanceSat:F8}")
+		<span @onclick="ChangeType" class="center-content-box clickable">
+			<span class="@(Type == "SATS" && OriginalBalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
+				@GetDisplayBalance()
 			</span>
 			<span class="bitcoin-orange clickable h2-custom">@Type</span>
 		</span>
@@ -60,9 +61,14 @@ else
 	private SendModal? _sendModal;
 	private SendFormModal? _sendWithInputModal;
 	private DecodeInvoiceResponse? _decodedInvoice;
+	private BitcoinPriceResponse? _btcPriceResponse;
+
+	private double _btcPriceUsd;
+	private double _usdValueOfMyBtc;
 
 	private bool IsLoading { get; set; } = true;
-	private double BalanceSat { get; set; }
+	// private double BalanceSat { get; set; }
+	private double OriginalBalanceSat { get; set; }
 	private bool ShowConfigurationPrompt { get; set; }
 	private InvoiceSubmission Submission { get; set; } = new();
 
@@ -83,7 +89,9 @@ else
 
 				if (balanceResponse != null)
 				{
-					BalanceSat = balanceResponse.BalanceSat;
+					OriginalBalanceSat = balanceResponse.BalanceSat;
+					_btcPriceResponse = await BitcoinPriceService.GetBitcoinPriceAsync();
+					_btcPriceUsd = _btcPriceResponse!.Usd!.Last;
 				}
 				else
 				{
@@ -156,15 +164,39 @@ else
 	{
 		if (Type == "SATS")
 		{
-			BalanceSat = BalanceSat / 100_000_000;
+			// Switch to BTC
 			Type = "BTC";
 		}
-		else
+		else if (Type == "BTC")
 		{
-			BalanceSat = Math.Round(BalanceSat * 100_000_000);
+			// Switch to USD
+			Type = "USD";
+		}
+		else if (Type == "USD")
+		{
+			// Switch back to SATS
 			Type = "SATS";
 		}
 	}
+
+	private string GetDisplayBalance()
+	{
+		if (Type == "SATS")
+		{
+			return $"{OriginalBalanceSat:N0}".Replace(",", " "); // Display in SATS
+		}
+		else if (Type == "BTC")
+		{
+			return $"{OriginalBalanceSat / 100_000_000:F8}"; // Convert to BTC
+		}
+		else if (Type == "USD")
+		{
+			return $"{(OriginalBalanceSat / 100_000_000) * _btcPriceUsd:F2}"; // Convert to USD
+		}
+
+		return string.Empty;
+	}
+
 	private void ShowReceiveModal() => _createInvoiceModal?.Show();
 	private void ShowSendModal() => _sendModal?.Show();
 

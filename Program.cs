@@ -21,6 +21,8 @@ builder.Services.AddScoped<SseController>();
 builder.Services.AddScoped<QrService>();
 
 builder.Services.AddSingleton(new ConcurrentDictionary<string, ConcurrentBag<SseController.SseClient>>());
+builder.Services.AddSingleton<IBitcoinPriceService, BitcoinPriceService>();
+
 
 builder.Services.AddControllers();
 
