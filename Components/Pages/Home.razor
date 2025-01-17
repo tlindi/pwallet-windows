@@ -61,7 +61,7 @@ else
 	private SendModal? _sendModal;
 	private SendFormModal? _sendWithInputModal;
 	private DecodeInvoiceResponse? _decodedInvoice;
-	private BitcoinPriceResponse? _btcPriceResponse;
+	private double? _btcPriceResponse;
 
 	private double? _btcPriceUsd;
 
@@ -90,11 +90,11 @@ else
 					OriginalBalanceSat = balanceResponse.BalanceSat;
 					try
 					{
-						_btcPriceResponse = await BitcoinPriceService.GetBitcoinPriceAsync();
+						_btcPriceResponse = await BitcoinPriceService.GetBitcoinPriceInUsdAsync();
 
-						if (_btcPriceResponse?.Usd != null)
+						if (_btcPriceResponse != null)
 						{
-							_btcPriceUsd = _btcPriceResponse.Usd.Last;
+							_btcPriceUsd = _btcPriceResponse;
 						}
 						else
 						{
