@@ -30,7 +30,7 @@ else if (ShowConfigurationPrompt)
 else
 {
 	<div class="center-content">
-		<span @onclick="ChangeType" class="center-content-box">
+			<span @onclick="ChangeType" class="center-content-box clickable">
 			<span class="@(Type == "SATS" && BalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
 				@(Type == "SATS" ? BalanceSat.ToString("N0", CultureInfo.InvariantCulture).Replace(",", " ") : $"{BalanceSat:F8}")
 			</span>
