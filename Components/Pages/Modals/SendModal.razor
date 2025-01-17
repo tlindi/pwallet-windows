@@ -80,11 +80,21 @@
 	{
 		if (!string.IsNullOrWhiteSpace(_inputData))
 		{
-			var submission = new InvoiceSubmission
+			if (_currentType == InvoiceType.Lnurl)
+			{
+				var result = await HandleLnUrlAuthAsync(_inputData);
+				if (result == "authentication success")
 				{
-					Invoice = _inputData,
-					Type = _currentType
-				};
+					await CloseModal();
+					return;
+				}
+			}
+
+			var submission = new InvoiceSubmission
+			{
+				Invoice = _inputData,
+				Type = _currentType
+			};
 
 			await OnSubmit.InvokeAsync(submission);
 			ClearInput();
@@ -121,25 +131,38 @@
 
 		var scannedData = _inputData.StartsWith("lightning:") ? _inputData.Substring("lightning:".Length) : _inputData;
 		_currentType = InvoiceTypeUtility.DetermineInvoiceType(scannedData);
+
 		if (_currentType == InvoiceType.Lnurl)
 		{
-			try
+			var result = await HandleLnUrlAuthAsync(scannedData);
+			if (result == "authentication success")
 			{
-				var result = await LnUrlService.LnUrlAuthAsync(scannedData);
-				if (result == "authentication success")
-				{
-					await _notificationModal?.Show(
-						"Auth successful",
-						$"You just successfully authenticated through lightning!"
-					)!;
-				}
+				await CloseModal();
 				return;
 			}
-			catch (Exception ex)
-			{
-			}
 		}
-		
+
 		await Show();
+	}
+
+	private async Task<string?> HandleLnUrlAuthAsync(string scannedData)
+	{
+		try
+		{
+			var result = await LnUrlService.LnUrlAuthAsync(scannedData);
+			if (result == "authentication success")
+			{
+				await _notificationModal?.Show(
+					"Auth successful",
+					"You just successfully authenticated through lightning!"
+				)!;
+			}
+
+			return result;
+		}
+		catch (Exception ex)
+		{
+			return "Not LnUrlAuth";
+		}
 	}
 }
