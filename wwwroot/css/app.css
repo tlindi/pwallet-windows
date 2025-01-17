@@ -51,7 +51,8 @@ html, body {
     box-sizing: border-box;
 }
 
-    .center-content .h1-custom {
+    .center-content .h1-custom-btc,
+    .center-content .h1-custom-sats {
         font-size: 120px;
         font-weight: 500;
         font-family: 'Orbitron', sans-serif;
