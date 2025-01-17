@@ -63,21 +63,26 @@
             var incoming = await PhoenixService.GetIncomingPaymentsAsync();
             var outgoing = await PhoenixService.GetOutgoingPaymentsAsync();
 
-            _payments = incoming.Select(p => new PaymentEntry
-                {
-                    Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
-                    Type = "Incoming",
-                    Amount = p.ReceivedSat,
-                    Fee = 0
-                }).ToList();
+            _payments = incoming
+                .Where(p => p.ReceivedSat > 0)
+                .Select(p => new PaymentEntry
+                    {
+                        Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
+                        Type = "Incoming",
+                        Amount = p.ReceivedSat,
+                        Fee = 0
+                    })
+                .ToList();
 
-            _payments.AddRange(outgoing.Select(p => new PaymentEntry
-                {
-                    Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
-                    Type = "Outgoing",
-                    Amount = p.Sent - p.Fees.ToSats(),
-                    Fee = p.Fees.ToSats()
-                }));
+            _payments.AddRange(outgoing
+                .Where(p => p.Sent > 0) // Exclude outgoing payments with 0 amount
+                .Select(p => new PaymentEntry
+                    {
+                        Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
+                        Type = "Outgoing",
+                        Amount = p.Sent - p.Fees.ToSats(),
+                        Fee = p.Fees.ToSats()
+                    }));
 
             _payments = _payments.OrderByDescending(p => p.Date).ToList();
         }
