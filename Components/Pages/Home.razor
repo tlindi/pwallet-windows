@@ -32,7 +32,7 @@ else
 {
 	<div class="center-content">
 		<span @onclick="ChangeType" class="center-content-box clickable">
-			<span class="@(Type == "SATS" && OriginalBalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
+			<span class="@(Type == "SATS" || Type == "USD" && OriginalBalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
 				@GetDisplayBalance()
 			</span>
 			<span class="bitcoin-orange clickable h2-custom">@Type</span>
@@ -63,11 +63,10 @@ else
 	private DecodeInvoiceResponse? _decodedInvoice;
 	private BitcoinPriceResponse? _btcPriceResponse;
 
-	private double _btcPriceUsd;
-	private double _usdValueOfMyBtc;
+	private double? _btcPriceUsd;
+	private double? _usdValueOfMyBtc;
 
 	private bool IsLoading { get; set; } = true;
-	// private double BalanceSat { get; set; }
 	private double OriginalBalanceSat { get; set; }
 	private bool ShowConfigurationPrompt { get; set; }
 	private InvoiceSubmission Submission { get; set; } = new();
@@ -90,12 +89,26 @@ else
 				if (balanceResponse != null)
 				{
 					OriginalBalanceSat = balanceResponse.BalanceSat;
-					_btcPriceResponse = await BitcoinPriceService.GetBitcoinPriceAsync();
-					_btcPriceUsd = _btcPriceResponse!.Usd!.Last;
+					try
+					{
+						_btcPriceResponse = await BitcoinPriceService.GetBitcoinPriceAsync();
+
+						if (_btcPriceResponse?.Usd != null)
+						{
+							_btcPriceUsd = _btcPriceResponse.Usd.Last;
+						}
+						else
+						{
+							_btcPriceUsd = null;
+						}
+					}
+					catch (Exception ex)
+					{
+						_btcPriceUsd = null;
+					}
 				}
 				else
 				{
-					Console.WriteLine("Failed to fetch balance.");
 				}
 
 				IsLoading = false;
@@ -103,13 +116,14 @@ else
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Error: {ex.Message}");
 				ShowConfigurationPrompt = true;
 				IsLoading = false;
 				StateHasChanged();
 			}
 		}
 	}
+
+
 
 	private async Task ConnectToSse(string normalizedKey)
 	{
@@ -164,17 +178,14 @@ else
 	{
 		if (Type == "SATS")
 		{
-			// Switch to BTC
 			Type = "BTC";
 		}
 		else if (Type == "BTC")
 		{
-			// Switch to USD
 			Type = "USD";
 		}
 		else if (Type == "USD")
 		{
-			// Switch back to SATS
 			Type = "SATS";
 		}
 	}
@@ -183,15 +194,22 @@ else
 	{
 		if (Type == "SATS")
 		{
-			return $"{OriginalBalanceSat:N0}".Replace(",", " "); // Display in SATS
+			return $"{OriginalBalanceSat:N0}".Replace(",", " ");
 		}
 		else if (Type == "BTC")
 		{
-			return $"{OriginalBalanceSat / 100_000_000:F8}"; // Convert to BTC
+			return $"{OriginalBalanceSat / 100_000_000:F8}";
 		}
 		else if (Type == "USD")
 		{
-			return $"{(OriginalBalanceSat / 100_000_000) * _btcPriceUsd:F2}"; // Convert to USD
+			if (_btcPriceUsd.HasValue)
+			{
+				return $"{(OriginalBalanceSat / 100_000_000) * _btcPriceUsd.Value:F2}";
+			}
+			else
+			{
+				return "X";
+			}
 		}
 
 		return string.Empty;
