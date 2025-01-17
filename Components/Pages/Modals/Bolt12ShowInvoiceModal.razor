@@ -48,7 +48,7 @@
 		Bolt12Offer = await PhoenixService.GetBolt12OfferAsync();
 		Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
 
-		_qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer.Offer);
+		_qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer!.Offer);
 		_isLoaded = true;
 
 		StateHasChanged();

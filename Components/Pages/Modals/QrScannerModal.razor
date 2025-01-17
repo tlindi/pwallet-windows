@@ -2,7 +2,7 @@
 <div class="modal-backdrop-qr" style="display: @(_isVisible ? "flex" : "none")">
 	<div class="modal-content-qr" @onclick:stopPropagation>
 		<div class="qr-scanner-container">
-			<QrScanner @ref="QrScannerRef" OnQrScanned="HandleQrScanned" />
+			<QrScanner @ref="_qrScannerRef" OnQrScanned="HandleQrScanned" />
 		</div>
 		<button class="floating-close-btn" @onclick="CloseModal">
 			<span class="bi bi-x-circle me-2"></span> Close
@@ -12,7 +12,7 @@
 
 @code {
 	private bool _isVisible;
-	private QrScanner? QrScannerRef;
+	private QrScanner? _qrScannerRef;
 
 	[Parameter] public EventCallback<string> OnQrScanned { get; set; }
 
@@ -22,9 +22,9 @@
 		StateHasChanged();
 
 		await Task.Delay(100);
-		if (QrScannerRef != null)
+		if (_qrScannerRef != null)
 		{
-			await QrScannerRef.StartScanner();
+			await _qrScannerRef.StartScanner();
 		}
 	}
 
@@ -33,18 +33,20 @@
 		_isVisible = false;
 		StateHasChanged();
 
-		if (QrScannerRef != null)
+		if (_qrScannerRef != null)
 		{
-			await QrScannerRef.StopScanner();
+			await _qrScannerRef.StopScanner();
 		}
 	}
 
 	private async Task HandleQrScanned(string result)
 	{
 		await Hide();
+		var data = result.StartsWith("lightning:") ? result.Substring("lightning:".Length) : result;
+
 		if (OnQrScanned.HasDelegate)
 		{
-			await OnQrScanned.InvokeAsync(result);
+			await OnQrScanned.InvokeAsync(data);
 		}
 	}
 

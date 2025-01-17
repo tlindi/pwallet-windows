@@ -1,6 +1,9 @@
 ﻿@using pWallet.Models
 @using pWallet.Enums
+@using pWallet.Interfaces
 @using pWallet.Utilities
+
+@inject ILnUrlService LnUrlService
 @inject IJSRuntime JsRuntime
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
@@ -9,7 +12,7 @@
 
 		<div class="input-container">
 			<textarea @ref="_inputRef" class="form-control" placeholder="Lightning invoice or address"
-					  @bind="_inputData" @oninput="HandleInputChange"></textarea>
+			@bind="_inputData" @oninput="HandleInputChange"></textarea>
 		</div>
 
 		<div class="button-row">
@@ -52,10 +55,11 @@
 
 	private ElementReference _inputRef;
 
-	public async void Show()
+	public Task Show()
 	{
 		_isVisible = true;
 		StateHasChanged();
+		return Task.CompletedTask;
 	}
 
 	public void Hide() => _isVisible = false;
@@ -117,7 +121,25 @@
 
 		var scannedData = _inputData.StartsWith("lightning:") ? _inputData.Substring("lightning:".Length) : _inputData;
 		_currentType = InvoiceTypeUtility.DetermineInvoiceType(scannedData);
-
-		Show();
+		if (_currentType == InvoiceType.Lnurl)
+		{
+			try
+			{
+				var result = await LnUrlService.LnUrlAuthAsync(scannedData);
+				if (result == "authentication success")
+				{
+					await _notificationModal?.Show(
+						"Auth successful",
+						$"You just successfully authenticated through lightning!"
+					)!;
+				}
+				return;
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+		
+		await Show();
 	}
 }

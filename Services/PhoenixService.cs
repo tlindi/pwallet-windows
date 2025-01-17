@@ -19,7 +19,15 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 		_configurationService = configurationService;
 	}
 
-	// NODESERVICE
+	private HttpClient CreateHttpClient(string apiUrl, string apiPassword)
+	{
+		var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
+		var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
+		client.DefaultRequestHeaders.Authorization =
+			new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+		return client;
+	}
+
 	public async Task<NodeInfoResponse?> GetNodeInfoAsync()
 	{
 		try
@@ -32,14 +40,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient
-			{
-				BaseAddress = new Uri(apiUrl)
-			};
-
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var response = await client.GetAsync("/getinfo");
 			response.EnsureSuccessStatusCode();
@@ -66,14 +67,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient
-			{
-				BaseAddress = new Uri(apiUrl)
-			};
-
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var response = await client.GetAsync("/getbalance");
 			response.EnsureSuccessStatusCode();
@@ -87,7 +81,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 			return null;
 		}
 	}
-
+	
 	public async Task<CloseChannelResponse?> CloseChannelAsync(CloseChannelRequest request)
 	{
 		try
@@ -100,14 +94,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient
-			{
-				BaseAddress = new Uri(apiUrl)
-			};
-
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var content = new FormUrlEncodedContent(new Dictionary<string, string>
 			{
@@ -128,7 +115,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 			return null;
 		}
 	}
-
+	
 	public async Task<DecodeInvoiceResponse?> DecodeInvoiceAsync(DecodeInvoiceRequest invoice)
 	{
 		try
@@ -141,10 +128,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var requestContent = new FormUrlEncodedContent(new[]
 			{
@@ -182,14 +166,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient
-			{
-				BaseAddress = new Uri(apiUrl)
-			};
-
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var content = new FormUrlEncodedContent(new[]
 			{
@@ -225,10 +202,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var response = await client.GetAsync("/getoffer");
 			response.EnsureSuccessStatusCode();
@@ -255,10 +229,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = System.Text.Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var response = await client.GetAsync("/getlnaddress");
 			response.EnsureSuccessStatusCode();
@@ -273,47 +244,65 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 		}
 	}
 
-
-	public async Task<List<IncomingPayment>> GetIncomingPaymentsAsync(string? externalId = null, bool all = true,
-		int limit = 20, int offset = 0)
+	public async Task<List<IncomingPayment>> GetIncomingPaymentsAsync(string? externalId = null, bool all = true, int limit = 20, int offset = 0)
 	{
-		var apiUrl = await _configurationService.GetApiUrlAsync();
-		var apiPassword = await _configurationService.GetApiPasswordAsync();
-
-		using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-		var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-		client.DefaultRequestHeaders.Authorization =
-			new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-
-		var queryParams = $"?all={all}&limit={limit}&offset={offset}";
-		if (!string.IsNullOrWhiteSpace(externalId))
+		try
 		{
-			queryParams += $"&externalId={externalId}";
+			var apiUrl = await _configurationService.GetApiUrlAsync();
+			var apiPassword = await _configurationService.GetApiPasswordAsync();
+
+			if (string.IsNullOrWhiteSpace(apiUrl) || string.IsNullOrWhiteSpace(apiPassword))
+			{
+				throw new InvalidOperationException("API URL or API password is missing.");
+			}
+
+			using var client = CreateHttpClient(apiUrl, apiPassword);
+
+			var queryParams = $"?all={all}&limit={limit}&offset={offset}";
+			if (!string.IsNullOrWhiteSpace(externalId))
+			{
+				queryParams += $"&externalId={externalId}";
+			}
+
+			var response = await client.GetAsync($"/payments/incoming{queryParams}");
+			response.EnsureSuccessStatusCode();
+
+			var json = await response.Content.ReadAsStringAsync();
+			return JsonSerializer.Deserialize<List<IncomingPayment>>(json) ?? new List<IncomingPayment>();
 		}
-
-		var response = await client.GetAsync($"/payments/incoming{queryParams}");
-		response.EnsureSuccessStatusCode();
-
-		var json = await response.Content.ReadAsStringAsync();
-		return JsonSerializer.Deserialize<List<IncomingPayment>>(json) ?? new List<IncomingPayment>();
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error fetching incoming payments: {ex.Message}");
+			return new List<IncomingPayment>();
+		}
 	}
 
 	public async Task<List<OutgoingPayment>> GetOutgoingPaymentsAsync(bool all = true, int limit = 20, int offset = 0)
 	{
-		var apiUrl = await _configurationService.GetApiUrlAsync();
-		var apiPassword = await _configurationService.GetApiPasswordAsync();
+		try
+		{
+			var apiUrl = await _configurationService.GetApiUrlAsync();
+			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
-		using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-		var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-		client.DefaultRequestHeaders.Authorization =
-			new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			if (string.IsNullOrWhiteSpace(apiUrl) || string.IsNullOrWhiteSpace(apiPassword))
+			{
+				throw new InvalidOperationException("API URL or API password is missing.");
+			}
 
-		var queryParams = $"?all={all}&limit={limit}&offset={offset}";
-		var response = await client.GetAsync($"/payments/outgoing{queryParams}");
-		response.EnsureSuccessStatusCode();
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
-		var json = await response.Content.ReadAsStringAsync();
-		return JsonSerializer.Deserialize<List<OutgoingPayment>>(json) ?? new List<OutgoingPayment>();
+			var queryParams = $"?all={all}&limit={limit}&offset={offset}";
+			var response = await client.GetAsync($"/payments/outgoing{queryParams}");
+			response.EnsureSuccessStatusCode();
+
+			var json = await response.Content.ReadAsStringAsync();
+			return JsonSerializer.Deserialize<List<OutgoingPayment>>(json) ?? new List<OutgoingPayment>();
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error fetching outgoing payments: {ex.Message}");
+			return new List<OutgoingPayment>();
+		}
 	}
 
 	public async Task<PaymentResponse?> ProcessPaymentAsync(InvoiceType type, string data, DecodeInvoiceResponse? decodedInvoice)
@@ -411,11 +400,7 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 			var apiUrl = await _configurationService.GetApiUrlAsync();
 			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-			
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
 			var content = new FormUrlEncodedContent(new Dictionary<string, string?>
 			{
@@ -453,12 +438,8 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 			var apiUrl = await _configurationService.GetApiUrlAsync();
 			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
-			// Prepare request content
 			var content = new FormUrlEncodedContent(new Dictionary<string, string?>
 			{
 				{ "amountSat", request.AmountSat?.ToString() },
@@ -466,7 +447,6 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				{ "message", request.Message }
 			});
 
-			// Make POST request
 			var response = await client.PostAsync("/payoffer", content);
 
 			if (response.IsSuccessStatusCode)
@@ -497,12 +477,8 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 			var apiUrl = await _configurationService.GetApiUrlAsync();
 			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
-			// Prepare request content
 			var content = new FormUrlEncodedContent(new Dictionary<string, string?>
 			{
 				{ "amountSat", request.AmountSat.ToString() },
@@ -510,7 +486,6 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				{ "message", request.Message }
 			});
 
-			// Make POST request
 			var response = await client.PostAsync("/lnurlpay", content);
 
 			if (response.IsSuccessStatusCode)
@@ -538,16 +513,11 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 	{
 		try
 		{
-			// Retrieve API URL and password
 			var apiUrl = await _configurationService.GetApiUrlAsync();
 			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
-			// Prepare request payload
 			var content = new FormUrlEncodedContent(new Dictionary<string, string?>
 			{
 				{ "amountSat", request.AmountSat?.ToString() },
@@ -555,7 +525,6 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				{ "message", request.Message }
 			});
 
-			// Make POST request
 			var response = await client.PostAsync("/paylnaddress", content);
 
 			if (response.IsSuccessStatusCode)
@@ -583,7 +552,6 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 	{
 		try
 		{
-			// Retrieve API URL and password
 			var apiUrl = await _configurationService.GetApiUrlAsync();
 			var apiPassword = await _configurationService.GetApiPasswordAsync();
 
@@ -592,13 +560,8 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				throw new InvalidOperationException("API URL or API password is missing.");
 			}
 
-			// Configure HTTP client
-			using var client = new HttpClient { BaseAddress = new Uri(apiUrl) };
-			var byteArray = Encoding.UTF8.GetBytes($":{apiPassword}");
-			client.DefaultRequestHeaders.Authorization =
-				new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			using var client = CreateHttpClient(apiUrl, apiPassword);
 
-			// Prepare request payload
 			var content = new FormUrlEncodedContent(new Dictionary<string, string>
 			{
 				{ "amountSat", request.AmountSat.ToString()! },
@@ -606,10 +569,8 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 				{ "feerateSatByte", request.FeerateSatByte.ToString() }
 			});
 
-			// Send POST request
 			var response = await client.PostAsync("/sendtoaddress", content);
 
-			// Handle response
 			if (response.IsSuccessStatusCode)
 			{
 				var transactionId = await response.Content.ReadAsStringAsync();
@@ -630,6 +591,44 @@ public class PhoenixService : INodeService, IPaymentService, ILnUrlService
 
 
 	// LNURL SERVICE
+	public async Task<string?> LnUrlAuthAsync(string lnurl)
+	{
+		try
+		{
+			var apiUrl = await _configurationService.GetApiUrlAsync();
+			var apiPassword = await _configurationService.GetApiPasswordAsync();
+
+			if (string.IsNullOrWhiteSpace(apiUrl) || string.IsNullOrWhiteSpace(apiPassword))
+			{
+				throw new InvalidOperationException("API URL or API password is missing.");
+			}
+
+			using var client = CreateHttpClient(apiUrl, apiPassword);
+
+			var content = new FormUrlEncodedContent(new Dictionary<string, string>
+			{
+				{ "lnurl", lnurl }
+			});
+
+			var response = await client.PostAsync("/lnurlauth", content);
+
+			if (response.IsSuccessStatusCode)
+			{
+				var responseContent = await response.Content.ReadAsStringAsync();
+				return responseContent;
+			}
+			else
+			{
+				var errorContent = await response.Content.ReadAsStringAsync();
+				throw new HttpRequestException($"Error: {response.StatusCode}, Content: {errorContent}");
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error during LNURL Auth: {ex.Message}");
+			throw;
+		}
+	}
 
 
 }

@@ -5,16 +5,16 @@
 
 @inject INodeService PhoenixService
 
-@if (NodeInfo == null)
+@if (_nodeInfo == null)
 {
 	<p>Loading node information...</p>
 }
 else
 {
 	<div class="node-info wrap-text">
-		<p><strong>Node ID:</strong> @NodeInfo.NodeId</p>
+		<p><strong>Node ID:</strong> @_nodeInfo.NodeId</p>
 		<h4>Channels</h4>
-		@if (NodeInfo.Channels.Count == 0)
+		@if (_nodeInfo.Channels.Count == 0)
 		{
 			<p>No channels found.</p>
 		}
@@ -35,7 +35,7 @@ else
 						</tr>
 					</thead>
 					<tbody>
-						@foreach (var channel in NodeInfo.Channels)
+						@foreach (var channel in _nodeInfo.Channels)
 						{
 							<tr>
 								<td>@channel.State</td>
@@ -60,7 +60,7 @@ else
 
 			<div class="d-block d-md-none">
 				<!-- Cards for smaller screens -->
-				@foreach (var channel in NodeInfo.Channels)
+				@foreach (var channel in _nodeInfo.Channels)
 				{
 					<div class="card mb-5 wrap-text">
 						<div class="card-body">
@@ -84,11 +84,11 @@ else
 	</div>
 }
 
-<CloseChannelModal @ref="CloseChannelModal" OnChannelClosed="ReloadNodeInfo" />
+<CloseChannelModal @ref="_closeChannelModal" OnChannelClosed="ReloadNodeInfo" />
 
 @code {
-	private NodeInfoResponse? NodeInfo;
-	private CloseChannelModal? CloseChannelModal;
+	private NodeInfoResponse? _nodeInfo;
+	private CloseChannelModal? _closeChannelModal;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -97,8 +97,8 @@ else
 
 	private async Task LoadNodeInfo()
 	{
-		NodeInfo = await PhoenixService.GetNodeInfoAsync();
-		if (NodeInfo == null)
+		_nodeInfo = await PhoenixService.GetNodeInfoAsync();
+		if (_nodeInfo == null)
 		{
 			Console.WriteLine("Failed to fetch node info.");
 		}
@@ -112,6 +112,6 @@ else
 
 	private void ShowCloseChannelModal(string channelId)
 	{
-		CloseChannelModal?.Show(channelId);
+		_closeChannelModal?.Show(channelId);
 	}
 }

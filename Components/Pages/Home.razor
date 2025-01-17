@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Globalization
 @using System.Text.Json
 @using pWallet.Enums
 @using pWallet.Interfaces
@@ -29,11 +30,13 @@ else if (ShowConfigurationPrompt)
 else
 {
 	<div class="center-content">
-		<span class="h1-custom">
-			<span>@(Type == "sats" ? BalanceSat.ToString("N0", System.Globalization.CultureInfo.InvariantCulture).Replace(",", " ") : $"{BalanceSat:F8}")</span>
-			<span class="bitcoin-orange clickable" @onclick="ChangeType">@Type</span>
+		<span @onclick="ChangeType" class="center-content-box">
+			<span class="@(Type == "SATS" && BalanceSat.ToString(CultureInfo.InvariantCulture).Replace(".", "").Replace(" ", "").Length <= 6 ? "h1-custom-sats" : "h1-custom-btc")">
+				@(Type == "SATS" ? BalanceSat.ToString("N0", CultureInfo.InvariantCulture).Replace(",", " ") : $"{BalanceSat:F8}")
+			</span>
+			<span class="bitcoin-orange clickable h2-custom">@Type</span>
 		</span>
-		<div class="mt-2 button-container">
+		<div class="mt-3 button-container">
 			<button class="btn btn-outline-primary button-width" @onclick="ShowSendModal">Send</button>
 			<button class="btn btn-outline-primary button-width" @onclick="ShowReceiveModal">Receive</button>
 		</div>
@@ -46,8 +49,7 @@ else
 	<Bolt12ShowInvoiceModal @ref="_bolt12InvoiceModal" />
 
 	<SendModal @ref="_sendModal" OnSubmit="HandleInvoice" />
-	<SendFormModal @ref="_sendWithInputModal" />
-	<WalletInvoiceModal @ref="_invoiceModalRef" Submission="Submission" DecodedInvoice="_decodedInvoice" OnSubmit="HandleInvoiceSubmit" />
+	<SendFormModal @ref="_sendWithInputModal" Submission="Submission" DecodedInvoice="_decodedInvoice" OnSubmit="HandleInvoiceSubmit" />
 }
 
 @code {
@@ -58,7 +60,6 @@ else
 	private SendModal? _sendModal;
 	private SendFormModal? _sendWithInputModal;
 	private DecodeInvoiceResponse? _decodedInvoice;
-	private WalletInvoiceModal? _invoiceModalRef;
 
 	private bool IsLoading { get; set; } = true;
 	private double BalanceSat { get; set; }
@@ -66,7 +67,7 @@ else
 	private InvoiceSubmission Submission { get; set; } = new();
 
 
-	private string Type { get; set; } = "sats";
+	private string Type { get; set; } = "SATS";
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -153,7 +154,7 @@ else
 
 	private void ChangeType()
 	{
-		if (Type == "sats")
+		if (Type == "SATS")
 		{
 			BalanceSat = BalanceSat / 100_000_000;
 			Type = "BTC";
@@ -161,7 +162,7 @@ else
 		else
 		{
 			BalanceSat = Math.Round(BalanceSat * 100_000_000);
-			Type = "sats";
+			Type = "SATS";
 		}
 	}
 	private void ShowReceiveModal() => _createInvoiceModal?.Show();
@@ -179,8 +180,6 @@ else
 
 	private async Task HandleInputSubmitted(InvoiceSubmission submission)
 	{
-		// ResetView();
-
 		if (submission.Type == InvoiceType.Bolt11Invoice)
 		{
 			_decodedInvoice = await NodeService.DecodeInvoiceAsync(new DecodeInvoiceRequest { Invoice = submission.Invoice });
@@ -196,13 +195,11 @@ else
 		}
 		else if (submission.Type == InvoiceType.Lnurl || submission.Type == InvoiceType.LightningAddress || submission.Type == InvoiceType.Bolt12Offer)
 		{
-
 			_decodedInvoice = new DecodeInvoiceResponse
-				{
-					Address = submission.Invoice,
-					Amount = null
-
-				};
+			{
+				Address = submission.Invoice,
+				Amount = null
+			};
 		}
 		else
 		{
@@ -212,13 +209,14 @@ else
 		if (_decodedInvoice != null)
 		{
 			Submission = submission;
-			_invoiceModalRef?.Show();
+			_sendWithInputModal?.Show();
 		}
 		else
 		{
 			Console.WriteLine("Failed to decode invoice.");
 		}
 	}
+
 
 	private async Task HandleInvoiceSubmit(string message)
 	{
@@ -261,8 +259,6 @@ else
 				"Invalid invoice data. Unable to process payment."
 			)!;
 		}
-
-		// ResetView();
 	}
 
 }

@@ -14,7 +14,7 @@ public static class SatsConverter
 
 	public static long ToSats(this long? msats)
 	{
-		return (long)(msats / 1000);
+		return (long)(msats / 1000)!;
 	}
 
 	/// <summary>
@@ -29,6 +29,6 @@ public static class SatsConverter
 
 	public static double ToSats(this double? msats)
 	{
-		return (double)(msats / 1000.0);
+		return (double)(msats / 1000.0)!;
 	}
 }

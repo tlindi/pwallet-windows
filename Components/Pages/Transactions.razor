@@ -8,7 +8,7 @@
 <div class="content-placement container-responsive">
     <h3>Payment History</h3>
 
-    @if (Payments == null)
+    @if (_payments == null)
     {
         <p>Loading payments...</p>
     }
@@ -24,7 +24,7 @@
                 </tr>
             </thead>
             <tbody class="table-transactions">
-                @foreach (var payment in Payments)
+                @foreach (var payment in _payments)
                 {
                     <tr>
                         <td>@payment.Date.ToString("yyyy-MM-dd HH:mm")</td>
@@ -43,7 +43,7 @@
 </div>
 
 @code {
-    private List<PaymentEntry>? Payments;
+    private List<PaymentEntry>? _payments;
     private bool _isInitialized;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -63,7 +63,7 @@
             var incoming = await PhoenixService.GetIncomingPaymentsAsync();
             var outgoing = await PhoenixService.GetOutgoingPaymentsAsync();
 
-            Payments = incoming.Select(p => new PaymentEntry
+            _payments = incoming.Select(p => new PaymentEntry
                 {
                     Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
                     Type = "Incoming",
@@ -71,7 +71,7 @@
                     Fee = 0
                 }).ToList();
 
-            Payments.AddRange(outgoing.Select(p => new PaymentEntry
+            _payments.AddRange(outgoing.Select(p => new PaymentEntry
                 {
                     Date = DateTimeOffset.FromUnixTimeMilliseconds(p.CreatedAt).UtcDateTime,
                     Type = "Outgoing",
@@ -79,7 +79,7 @@
                     Fee = p.Fees.ToSats()
                 }));
 
-            Payments = Payments.OrderByDescending(p => p.Date).ToList();
+            _payments = _payments.OrderByDescending(p => p.Date).ToList();
         }
         catch (Exception ex)
         {

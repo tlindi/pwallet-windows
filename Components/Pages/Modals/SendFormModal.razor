@@ -7,21 +7,22 @@
 	<div class="modal-content" @onclick:stopPropagation>
 		<h4 class="modal-title">Invoice Details</h4>
 
-		@if (InvoiceType == InvoiceType.Bolt11Invoice && DecodedInvoice != null)
+		@if (Submission!.Type == InvoiceType.Bolt11Invoice && DecodedInvoice != null)
 		{
 			<div>
 				<input type="text" class="form-control" @bind="DecodedInvoice.Address" disabled />
 				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="DecodedInvoice.Amount" disabled />
 			</div>
 		}
-		else if (InvoiceType == InvoiceType.OnChainAddress && DecodedInvoice != null)
+		else if (Submission.Type == InvoiceType.OnChainAddress && DecodedInvoice != null)
 		{
 			<div>
 				<input type="text" class="form-control" value="@DecodedInvoice.OnChainAddress" disabled />
-				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="@DecodedInvoice.Amount" />
+				<input @ref="_amountInput" type="number" class="form-control mt-3" @bind="@DecodedInvoice.Amount" placeholder="Amount sats" />
+				<input type="number" class="form-control mt-3" @bind="@DecodedInvoice.FeeRateOnChain" placeholder="Fee sat/vB"/>
 			</div>
 		}
-		else if (InvoiceType == InvoiceType.Lnurl || InvoiceType == InvoiceType.LightningAddress || InvoiceType == InvoiceType.Bolt12Offer)
+		else if (Submission.Type == InvoiceType.Lnurl || Submission.Type == InvoiceType.LightningAddress || Submission.Type == InvoiceType.Bolt12Offer)
 		{
 			<div>
 				<input type="text" class="form-control" value="@DecodedInvoice?.Address" disabled />
@@ -50,7 +51,7 @@
 	private long? _onChainAmount;
 	private long? _lnUrlAmount;
 
-	[Parameter] public InvoiceType InvoiceType { get; set; }
+	[Parameter] public InvoiceSubmission Submission { get; set; }
 	[Parameter] public DecodeInvoiceResponse? DecodedInvoice { get; set; }
 	[Parameter] public EventCallback<string> OnSubmit { get; set; }
 
@@ -60,7 +61,6 @@
 	{
 		_isVisible = true;
 		await Task.Delay(100);
-		await JsRuntime.InvokeVoidAsync("focusElement", _amountInput);
 		StateHasChanged();
 	}
 
@@ -74,7 +74,14 @@
 	private async Task SubmitInvoice()
 	{
 		Hide();
+		if (Submission!.Type == InvoiceType.OnChainAddress)
+		{
+		await OnSubmit.InvokeAsync("OnChain Transaction successfully processed");
+		}
+		else
+		{
 		await OnSubmit.InvokeAsync("Invoice processed successfully.");
+		}
 	}
 
 	private void CloseModal()

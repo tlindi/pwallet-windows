@@ -2,4 +2,5 @@
 
 public interface ILnUrlService
 {
+	Task<string?> LnUrlAuthAsync(string lnurl);
 }
