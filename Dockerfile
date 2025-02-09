@@ -8,9 +8,9 @@ RUN dotnet publish -c Release -o /out --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-COPY --from=build /out /app
+RUN apt-get update && apt-get install -y libgdiplus
 
-VOLUME ["/app-keys"]
+COPY --from=build /out /app
 
 EXPOSE 3939
 
