@@ -19,6 +19,13 @@ builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<WebSocketService>();
 builder.Services.AddScoped<SseController>();
 builder.Services.AddScoped<QrService>();
+builder.Services.AddSingleton(sp =>
+{
+	var config = sp.GetRequiredService<IConfiguration>();
+	var apiKey = config["Cloudflare:ApiKey"];
+	var zoneId = config["Cloudflare:ZoneId"];
+	return new CloudflareDnsService(apiKey, zoneId);
+});
 
 builder.Services.AddSingleton(new ConcurrentDictionary<string, ConcurrentBag<SseController.SseClient>>());
 builder.Services.AddSingleton<IBitcoinPriceService, BitcoinPriceService>();

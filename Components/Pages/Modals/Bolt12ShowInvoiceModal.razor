@@ -4,13 +4,38 @@
 
 @inject IPaymentService PhoenixService
 @inject IJSRuntime JsRuntime
+@inject CloudflareDnsService CloudflareDns
+
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
 	<div class="modal-content" @onclick:stopPropagation>
 		<h4 class="modal-title">Bolt 12 Invoice</h4>
 		@if (_isLoaded)
 		{
-			<span @onclick="CopyAddressToClipboard" class="clickable"><strong>Lightning Address:</strong> @Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
+			<span @onclick="CopyAddressToClipboard" class="clickable">
+				<strong>Lightning Address: </strong>
+				@if (_isEditingUsername)
+				{
+					<br />
+					<input @bind="_customUsername" @bind:event="oninput" />
+					<span>@@pwallet.app</span>
+					<i class="bi bi-check2 text-success clickable" @onclick="HandleCustomUsernameChange"></i>
+					<i class="bi bi-x-lg text-danger clickable" @onclick="() => _isEditingUsername = false"></i>
+				}
+				else
+				{
+					@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')
+					<i class="bi bi-pencil text-success clickable ms-2" @onclick="() => _isEditingUsername = true"></i>
+					@if (_hasCustomAddress)
+					{
+						<i class="bi bi-trash text-danger clickable ms-2" @onclick="HandleDeleteCustomUsername"></i>
+					}
+				}
+			</span>
+			@if (!string.IsNullOrEmpty(_errorMessage))
+			{
+				<p class="text-danger">@_errorMessage</p>
+			}
 			<div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard" class="clickable">
 				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
 			</div>
@@ -19,7 +44,7 @@
 		{
 			<p>Loading...</p>
 		}
-		
+
 		<div class="button-row mt-3">
 			<button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
 				<span class="bi bi-clipboard me-2"></span> Copy
@@ -32,6 +57,10 @@
 </div>
 
 @code {
+	private string _customUsername = string.Empty;
+	private bool _hasCustomAddress = false;
+	private bool _isEditingUsername = false;
+	private string _errorMessage = string.Empty;
 	private bool _isVisible;
 	private bool _isLoaded;
 	private string? _qrCodeBase64 = string.Empty;
@@ -42,11 +71,33 @@
 
 	public bool IsVisible => _isVisible;
 
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		await CheckForExistingRecord();
+	}
+
+	private async Task CheckForExistingRecord()
+	{
+		if (Bolt12Offer != null && !string.IsNullOrEmpty(Bolt12Offer.Offer))
+		{
+			var existingUsername = await CloudflareDns.FindRecordNameByContent(Bolt12Offer.Offer);
+			if (!string.IsNullOrEmpty(existingUsername))
+			{
+				_customUsername = existingUsername;
+				_hasCustomAddress = true;
+				Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@pwallet.app";
+			}
+		}
+	}
+
 	public async Task Show()
 	{
 		_isVisible = true;
 		Bolt12Offer = await PhoenixService.GetBolt12OfferAsync();
 		Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+
+		await CheckForExistingRecord();
 
 		_qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer!.Offer);
 		_isLoaded = true;
@@ -81,5 +132,82 @@
 		{
 			await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
 		}
+	}
+
+	private async Task HandleCustomUsernameChange()
+	{
+		_errorMessage = string.Empty;
+		var lowercaseUsername = _customUsername.ToLowerInvariant();
+
+		// Check if the new name is available
+		var recordExists = await CloudflareDns.CheckIfRecordExists(lowercaseUsername);
+		if (recordExists)
+		{
+			_errorMessage = "This username is already in use.";
+			return;
+		}
+
+		// Get the existing Bolt12Offer value
+		string offerContent = Bolt12Offer?.Offer;
+		if (string.IsNullOrEmpty(offerContent))
+		{
+			_errorMessage = "Offer content is missing. Please try again.";
+			return;
+		}
+
+		// Delete the old record if it exists
+		if (_hasCustomAddress)
+		{
+			var deleteSuccess = await CloudflareDns.DeleteDnsRecord(_customUsername, offerContent);
+			if (!deleteSuccess)
+			{
+				_errorMessage = "Failed to remove old custom address. Please try again.";
+				return;
+			}
+
+			_hasCustomAddress = false;
+			_customUsername = string.Empty;
+			Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+		}
+    
+
+		// Add the new record
+		var recordId = await CloudflareDns.AddTxtRecord(lowercaseUsername, Bolt12Offer!.Offer);
+		if (!string.IsNullOrEmpty(recordId))
+		{
+			_hasCustomAddress = true;
+			_customUsername = lowercaseUsername;
+			Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@pwallet.app";
+			_isEditingUsername = false;
+		}
+		else
+		{
+			_errorMessage = "Failed to create DNS record. Please try again.";
+			_isEditingUsername = false;
+		}
+
+		StateHasChanged();
+	}
+
+
+	private async Task HandleDeleteCustomUsername()
+	{
+		if (_hasCustomAddress && Bolt12Offer != null)
+		{
+			var success = await CloudflareDns.DeleteDnsRecord(_customUsername, Bolt12Offer.Offer);
+			if (success)
+			{
+				_hasCustomAddress = false;
+				_customUsername = string.Empty;
+				Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+				_errorMessage = "Custom address removed successfully.";
+			}
+			else
+			{
+				_errorMessage = "Failed to remove custom address. Please try again.";
+			}
+			StateHasChanged();
+		}
+		StateHasChanged();
 	}
 }
