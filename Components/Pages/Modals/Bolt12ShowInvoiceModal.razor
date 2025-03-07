@@ -12,7 +12,7 @@
 		<h4 class="modal-title">Bolt 12 Invoice</h4>
 		@if (_isLoaded)
 		{
-			<span @onclick="CopyAddressToClipboard" class="clickable">
+			<span>
 				<strong>Lightning Address: </strong>
 				@if (_isEditingUsername)
 				{
@@ -24,7 +24,7 @@
 				}
 				else
 				{
-					@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')
+					<span style="color:#FF9900;">@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
 					<i class="bi bi-pencil text-success clickable ms-2" @onclick="() => _isEditingUsername = true"></i>
 					@if (_hasCustomAddress)
 					{
