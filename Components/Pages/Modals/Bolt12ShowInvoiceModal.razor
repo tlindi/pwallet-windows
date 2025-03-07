@@ -17,7 +17,7 @@
 				@if (_isEditingUsername)
 				{
 					<br />
-					<input @bind="_customUsername" @bind:event="oninput" />
+					<InputText @bind-Value="_customUsernameInput" />
 					<span>@@pwallet.app</span>
 					<i class="bi bi-check2 text-success clickable" @onclick="HandleCustomUsernameChange"></i>
 					<i class="bi bi-x-lg text-danger clickable" @onclick="() => _isEditingUsername = false"></i>
@@ -58,6 +58,7 @@
 
 @code {
 	private string _customUsername = string.Empty;
+	private string _customUsernameInput = string.Empty;
 	private bool _hasCustomAddress = false;
 	private bool _isEditingUsername = false;
 	private string _errorMessage = string.Empty;
@@ -137,57 +138,53 @@
 	private async Task HandleCustomUsernameChange()
 	{
 		_errorMessage = string.Empty;
-		var lowercaseUsername = _customUsername.ToLowerInvariant();
 
-		// Check if the new name is available
-		var recordExists = await CloudflareDns.CheckIfRecordExists(lowercaseUsername);
+		// Store the old username before updating _customUsername
+		var oldUsername = _customUsername.ToLowerInvariant(); // This is the current custom address (e.g., hodladi)
+		var newUsername = _customUsernameInput.ToLowerInvariant(); // This is the new custom address entered by the user (e.g., test)
+
+		// Step 1: Check if the new name is available
+		var recordExists = await CloudflareDns.CheckIfRecordExists(newUsername);
 		if (recordExists)
 		{
 			_errorMessage = "This username is already in use.";
 			return;
 		}
 
-		// Get the existing Bolt12Offer value
-		string offerContent = Bolt12Offer?.Offer;
-		if (string.IsNullOrEmpty(offerContent))
-		{
-			_errorMessage = "Offer content is missing. Please try again.";
-			return;
-		}
-
-		// Delete the old record if it exists
+		// Step 2: Delete the old record if it exists
 		if (_hasCustomAddress)
 		{
-			var deleteSuccess = await CloudflareDns.DeleteDnsRecord(_customUsername, offerContent);
+			Console.WriteLine($"Attempting to delete old DNS record: {oldUsername}");
+			var deleteSuccess = await CloudflareDns.DeleteDnsRecord(oldUsername, Bolt12Offer!.Offer); // Use oldUsername here
 			if (!deleteSuccess)
 			{
 				_errorMessage = "Failed to remove old custom address. Please try again.";
 				return;
 			}
-
-			_hasCustomAddress = false;
-			_customUsername = string.Empty;
-			Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+			Console.WriteLine($"Successfully deleted old DNS record: {oldUsername}");
 		}
-    
 
-		// Add the new record
-		var recordId = await CloudflareDns.AddTxtRecord(lowercaseUsername, Bolt12Offer!.Offer);
+		// Step 3: Add the new record
+		Console.WriteLine($"Attempting to add new DNS record: {newUsername}");
+		var recordId = await CloudflareDns.AddTxtRecord(newUsername, Bolt12Offer!.Offer);
 		if (!string.IsNullOrEmpty(recordId))
 		{
+			// Update state with the new custom address
 			_hasCustomAddress = true;
-			_customUsername = lowercaseUsername;
+			_customUsername = newUsername; // Update _customUsername to reflect the new name
 			Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@pwallet.app";
 			_isEditingUsername = false;
+			Console.WriteLine($"Successfully added new DNS record: {newUsername}");
 		}
 		else
 		{
 			_errorMessage = "Failed to create DNS record. Please try again.";
-			_isEditingUsername = false;
+			return;
 		}
 
 		StateHasChanged();
 	}
+
 
 
 	private async Task HandleDeleteCustomUsername()

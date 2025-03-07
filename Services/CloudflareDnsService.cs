@@ -50,6 +50,12 @@ namespace pWallet.Services
 	        {
 		        var fullName = $"{name}.user._bitcoin-payment.pwallet.app";
 		        var records = await _client.Zones.DnsRecords.GetAsync(_zoneId);
+
+		        foreach (var record in records.Result)
+		        {
+			        Console.WriteLine($"Checking DNS Record: Name={record.Name}");
+		        }
+
 		        return records.Result.Any(r => r.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase));
 	        }
 	        catch (Exception ex)
@@ -75,42 +81,32 @@ namespace pWallet.Services
 	        {
 		        var records = await _client.Zones.DnsRecords.GetAsync(_zoneId);
 
-		        if (records?.Result != null)
+		        foreach (var record in records.Result)
 		        {
-			        var recordToDelete = records.Result.FirstOrDefault(r =>
-				        r.Type == DnsRecordType.Txt &&
-				        r.Name.Equals($"{name}.user._bitcoin-payment.pwallet.app", StringComparison.OrdinalIgnoreCase) &&
-				        r.Content.Equals($"bitcoin:?lno={offerContent}", StringComparison.OrdinalIgnoreCase));
+			        Console.WriteLine($"Found Record: Name={record.Name}, Content={record.Content}");
+		        }
 
-			        if (recordToDelete != null)
-			        {
-				        var result = await _client.Zones.DnsRecords.DeleteAsync(_zoneId, recordToDelete.Id);
-				        if (result.Success)
-				        {
-					        return true; // Deletion successful
-				        }
-				        else
-				        {
-					        Console.WriteLine($"Failed to delete DNS record. Errors: {string.Join(", ", result.Errors.Select(e => e.Message))}");
-					        return false; // Deletion failed
-				        }
-			        }
-			        else
-			        {
-				        Console.WriteLine("Record to delete not found.");
-				        return false; // Record not found to delete
-			        }
+		        var recordToDelete = records.Result.FirstOrDefault(r =>
+			        r.Type == DnsRecordType.Txt &&
+			        r.Name.Equals($"{name}.user._bitcoin-payment.pwallet.app", StringComparison.OrdinalIgnoreCase) &&
+			        r.Content.Equals($"bitcoin:?lno={offerContent}", StringComparison.OrdinalIgnoreCase));
+
+		        if (recordToDelete != null)
+		        {
+			        Console.WriteLine($"Deleting Record: Name={recordToDelete.Name}, Content={recordToDelete.Content}");
+			        var result = await _client.Zones.DnsRecords.DeleteAsync(_zoneId, recordToDelete.Id);
+			        return result.Success;
 		        }
 		        else
 		        {
-			        Console.WriteLine("Failed to retrieve DNS records.");
-			        return false; // Failed to retrieve records
+			        Console.WriteLine($"No matching DNS record found for deletion: Name={name}, OfferContent={offerContent}");
+			        return false;
 		        }
 	        }
 	        catch (Exception ex)
 	        {
-		        Console.WriteLine($"An error occurred: {ex.Message}");
-		        return false; // Exception occurred
+		        Console.WriteLine($"Error deleting DNS record: {ex.Message}");
+		        return false;
 	        }
         }
 
