@@ -17,24 +17,36 @@
 				@if (_isEditingUsername)
 				{
 					<br />
-					<InputText @bind-Value="_customUsernameInput" />
-					<span>@@pwallet.app</span>
-					<i class="bi bi-check2 text-success clickable" @onclick="HandleCustomUsernameChange"></i>
-					<i class="bi bi-x-lg text-danger clickable" @onclick="() => _isEditingUsername = false"></i>
+					<div class="input-group input-group-sm mb-3" style="width: 300px;">
+						<!-- Input field -->
+						<InputText type="text" class="form-control" @bind-Value="_customUsernameInput" aria-label="Custom username" style="width: 150px;" />
+
+						<!-- Help text -->
+						<span class="input-group-text" style="font-size: 14px;">@@pwallet.app</span>
+
+						<!-- Icons -->
+						<span class="input-group-text">
+							<i class="bi bi-check-lg text-success clickable" style="font-size:18px !important;" @onclick="HandleCustomUsernameChange"></i>
+							<i class="bi bi-x-lg text-danger clickable ms-3" style="font-size:18px !important;" @onclick="() => _isEditingUsername = false"></i>
+						</span>
+					</div>
+
 				}
 				else
 				{
-					<span style="color:#FF9900;">@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
-					<i class="bi bi-pencil text-success clickable ms-2" @onclick="() => _isEditingUsername = true"></i>
-					@if (_hasCustomAddress)
-					{
-						<i class="bi bi-trash text-danger clickable ms-2" @onclick="HandleDeleteCustomUsername"></i>
-					}
+					<span style="color:#FF9900; font-size:14px;">@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
+					<span class="ms-2">
+						<i class="bi bi-pencil text-success clickable ms-2" style="font-size:18px !important;" @onclick="() => _isEditingUsername = true"></i>
+						@if (_hasCustomAddress)
+						{
+							<i class="bi bi-trash text-danger clickable ms-3" style="font-size:18px !important;" @onclick="HandleDeleteCustomUsername"></i>
+						}
+					</span>
 				}
 			</span>
 			@if (!string.IsNullOrEmpty(_errorMessage))
 			{
-				<p class="text-danger">@_errorMessage</p>
+				<p class="text-danger" style="font-size: 12px;">@_errorMessage</p>
 			}
 			<div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard" class="clickable">
 				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
