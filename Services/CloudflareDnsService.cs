@@ -138,5 +138,19 @@ namespace pWallet.Services
 	        return !string.IsNullOrEmpty(recordId);
         }
 
+        public async Task<string> GetDomainNameAsync()
+        {
+	        try
+	        {
+		        var zone = await _client.Zones.GetDetailsAsync(_zoneId);
+		        return zone.Result.Name;
+	        }
+	        catch (Exception ex)
+	        {
+		        Console.WriteLine($"Error fetching domain name: {ex.Message}");
+		        return string.Empty;
+	        }
+        }
+
     }
 }

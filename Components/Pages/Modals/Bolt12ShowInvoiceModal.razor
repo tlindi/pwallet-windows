@@ -22,7 +22,7 @@
 						<InputText type="text" class="form-control" @bind-Value="_customUsernameInput" aria-label="Custom username" style="width: 150px;" />
 
 						<!-- Help text -->
-						<span class="input-group-text" style="font-size: 14px;">@@pwallet.app</span>
+						<span class="input-group-text" style="font-size: 14px;">@@@_domainName</span>
 
 						<!-- Icons -->
 						<span class="input-group-text">
@@ -69,6 +69,7 @@
 </div>
 
 @code {
+	private string _domainName = string.Empty;
 	private string _customUsername = string.Empty;
 	private string _customUsernameInput = string.Empty;
 	private bool _hasCustomAddress = false;
@@ -87,9 +88,11 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await base.OnInitializedAsync();
+		_domainName = await CloudflareDns.GetDomainNameAsync();
 		await CheckForExistingRecord();
 	}
 
+	// Update the LightningAddress to use the dynamic domain name
 	private async Task CheckForExistingRecord()
 	{
 		if (Bolt12Offer != null && !string.IsNullOrEmpty(Bolt12Offer.Offer))
@@ -99,7 +102,7 @@
 			{
 				_customUsername = existingUsername;
 				_hasCustomAddress = true;
-				Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@pwallet.app";
+				Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
 			}
 		}
 	}
@@ -184,7 +187,7 @@
 			// Update state with the new custom address
 			_hasCustomAddress = true;
 			_customUsername = newUsername; // Update _customUsername to reflect the new name
-			Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@pwallet.app";
+			Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
 			_isEditingUsername = false;
 			Console.WriteLine($"Successfully added new DNS record: {newUsername}");
 		}
