@@ -5,64 +5,64 @@
 @inject IJSRuntime JsRuntime
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
-	<div class="modal-content" @onclick:stopPropagation>
-		<h4 class="modal-title">Invoice</h4>
-		@if (_invoice != null)
-		{
-			<div style="text-align: center; margin-top: 5px;" @onclick="CopyOfferToClipboard" class="clickable">
-				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
-			</div>
-			<span class="mt-3 mb-1 ms-1"><strong>Amount:</strong> @_invoice.AmountSat <span class="bitcoin-orange">sats</span></span>
-			<textarea readonly class="form-control clickable" @onclick="CopyOfferToClipboard">@_invoice.Serialized</textarea>
-		}
-		else
-		{
-			<p>Loading invoice...</p>
-		}
-		<div class="button-row mt-3">
-			<button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
-				<span class="bi bi-clipboard me-2"></span> Copy
-			</button>
-			<button class="btn btn-outline-danger" @onclick="CloseModal">
-				<span class="me-2"></span> Close
-			</button>
-		</div>
-	</div>
+    <div class="modal-content" @onclick:stopPropagation>
+        <h4 class="modal-title">Invoice</h4>
+        @if (_invoice != null)
+        {
+            <div style="text-align: center; margin-top: 5px;" class="clickable">
+                <img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
+            </div>
+            <span class="mt-3 mb-1 ms-1"><strong>Amount:</strong> @_invoice.AmountSat <span class="bitcoin-orange">sats</span></span>
+            <textarea readonly class="form-control clickable" @onclick="CopyOfferToClipboard">@_invoice.Serialized</textarea>
+        }
+        else
+        {
+            <p>Loading invoice...</p>
+        }
+        <div class="button-row mt-3">
+            <button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
+                <span class="bi bi-clipboard me-2"></span> Copy
+            </button>
+            <button class="btn btn-outline-danger" @onclick="CloseModal">
+                <span class="me-2"></span> Close
+            </button>
+        </div>
+    </div>
 </div>
 
 @code {
-	private bool _isVisible = false;
+    private bool _isVisible = false;
 
-	private Bolt11InvoiceResponse? _invoice;
-	private string? _qrCodeBase64;
-	public bool IsVisible => _isVisible;
+    private Bolt11InvoiceResponse? _invoice;
+    private string? _qrCodeBase64;
+    public bool IsVisible => _isVisible;
 
-	public void Show(Bolt11InvoiceResponse invoice)
-	{
-		_qrCodeBase64 = QrService.GenerateQrCodeBase64(invoice.Serialized);
-		_invoice = invoice;
-		_isVisible = true;
-		StateHasChanged();
-	}
+    public void Show(Bolt11InvoiceResponse invoice)
+    {
+        _qrCodeBase64 = QrService.GenerateQrCodeBase64(invoice.Serialized);
+        _invoice = invoice;
+        _isVisible = true;
+        StateHasChanged();
+    }
 
-	public void CloseModal()
-	{
-		_isVisible = false;
-		StateHasChanged();
-	}
+    public void CloseModal()
+    {
+        _isVisible = false;
+        StateHasChanged();
+    }
 
-	private async Task CopyOfferToClipboard()
-	{
-		try
-		{
-			if (_invoice != null && !string.IsNullOrWhiteSpace(_invoice.Serialized))
-			{
-				await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", _invoice.Serialized);
-			}
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Error copying Bolt12 offer to clipboard: {ex.Message}");
-		}
-	}
-	}
+    private async Task CopyOfferToClipboard()
+    {
+        try
+        {
+            if (_invoice != null && !string.IsNullOrWhiteSpace(_invoice.Serialized))
+            {
+                await JsRuntime.InvokeVoidAsync("copyToClipboard", _invoice.Serialized);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error copying invoice to clipboard: {ex.Message}");
+        }
+    }
+}
