@@ -9,6 +9,7 @@
     <PackageReference Include="CloudFlare.Client" Version="8.0.0" />
     <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="2.0.6" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
+    <PackageReference Include="TextCopy" Version="6.2.1" />
     <PackageReference Include="Websocket.Client" Version="5.1.2" />
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>

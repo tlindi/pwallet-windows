@@ -3,6 +3,7 @@ using pWallet.Controllers;
 using pWallet.Services;
 using System.Collections.Concurrent;
 using pWallet.Interfaces;
+using TextCopy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<WebSocketService>();
 builder.Services.AddScoped<SseController>();
 builder.Services.AddScoped<QrService>();
+builder.Services.InjectClipboard();
 builder.Services.AddSingleton(sp =>
 {
 	var config = sp.GetRequiredService<IConfiguration>();

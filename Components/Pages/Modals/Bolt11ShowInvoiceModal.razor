@@ -1,8 +1,9 @@
 ﻿@using pWallet.Models
 @using pWallet.Services
+@using TextCopy
 
 @inject QrService QrService
-@inject IJSRuntime JsRuntime
+@inject IClipboard Clipboard
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
     <div class="modal-content" @onclick:stopPropagation>
@@ -57,7 +58,7 @@
         {
             if (_invoice != null && !string.IsNullOrWhiteSpace(_invoice.Serialized))
             {
-                await JsRuntime.InvokeVoidAsync("copyToClipboard", _invoice.Serialized);
+                await Clipboard.SetTextAsync(_invoice.Serialized);
             }
         }
         catch (Exception ex)

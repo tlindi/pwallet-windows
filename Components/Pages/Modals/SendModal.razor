@@ -2,9 +2,10 @@
 @using pWallet.Enums
 @using pWallet.Interfaces
 @using pWallet.Utilities
+@using TextCopy
 
 @inject ILnUrlService LnUrlService
-@inject IJSRuntime JsRuntime
+@inject IClipboard Clipboard
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
     <div class="modal-content" @onclick:stopPropagation>
@@ -106,7 +107,7 @@
     {
         try
         {
-            var clipboardText = await JsRuntime.InvokeAsync<string>("pasteFromClipboard");
+            var clipboardText = await Clipboard.GetTextAsync();
             if (!string.IsNullOrEmpty(clipboardText))
             {
                 _inputData = clipboardText;

@@ -1,10 +1,11 @@
 ﻿@using pWallet.Interfaces
 @using pWallet.Models
 @using pWallet.Services
+@using TextCopy
 
 @inject IPaymentService PhoenixService
-@inject IJSRuntime JsRuntime
 @inject CloudflareDnsService CloudflareDns
+@inject IClipboard Clipboard
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
     <div class="modal-content" @onclick:stopPropagation>
@@ -132,7 +133,7 @@
         {
             if (Bolt12Offer != null && !string.IsNullOrWhiteSpace(Bolt12Offer.Offer))
             {
-                await JsRuntime.InvokeVoidAsync("copyToClipboard", Bolt12Offer.Offer);
+                await Clipboard.SetTextAsync(Bolt12Offer.Offer);
             }
         }
         catch (Exception ex)
@@ -145,7 +146,7 @@
     {
         if (!string.IsNullOrWhiteSpace(Bolt12LightninAddress?.LightningAddress))
         {
-            await JsRuntime.InvokeVoidAsync("copyToClipboard", Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
+            await Clipboard.SetTextAsync(Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
         }
     }
 
