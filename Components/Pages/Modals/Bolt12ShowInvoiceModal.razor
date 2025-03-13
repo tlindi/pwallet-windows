@@ -51,6 +51,10 @@
             <div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard" class="clickable">
                 <img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
             </div>
+            @if (_showCopyMessage)
+            {
+                <span style="color:#ff9900; text-align: center; margin-top:5px;">@_copyMessage</span>
+            }
         }
         else
         {
@@ -69,6 +73,8 @@
 </div>
 
 @code {
+    private string _copyMessage = "Copied to clipboard";
+    private bool _showCopyMessage = false;
     private string _domainName = string.Empty;
     private string _customUsername = string.Empty;
     private string _customUsernameInput = string.Empty;
@@ -134,6 +140,9 @@
             if (Bolt12Offer != null && !string.IsNullOrWhiteSpace(Bolt12Offer.Offer))
             {
                 await Clipboard.SetTextAsync(Bolt12Offer.Offer);
+                _showCopyMessage = true;
+                await Task.Delay(1500);
+                _showCopyMessage = false;
             }
         }
         catch (Exception ex)
@@ -147,6 +156,9 @@
         if (!string.IsNullOrWhiteSpace(Bolt12LightninAddress?.LightningAddress))
         {
             await Clipboard.SetTextAsync(Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
+            _showCopyMessage = true;
+            await Task.Delay(1500);
+            _showCopyMessage = false;
         }
     }
 
