@@ -111,19 +111,35 @@ main {
 }
 
 .sidebar {
-    width: 100%;
-    background-color: transparent;
+    width: 250px;
+    background-color: white;
     position: fixed;
     top: 7vh;
     left: 0;
     transition: transform 0.3s ease;
     z-index: 1000;
     overflow-y: auto;
-    transform: translateY(-100vh);
+    height: 100vh;
+    transform: translateY(100vh);
 }
 
     .sidebar.active {
         transform: translateY(0);
+    }
+
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+    .sidebar-backdrop.show {
+        display: block;
     }
 
 
@@ -133,14 +149,16 @@ main {
         width: 100%;
         background-color: white;
         position: fixed;
-        top: 7vh;
+        top: 65vh;
         left: 0;
         transition: transform 0.3s ease;
         z-index: 1000;
         overflow-y: auto;
-        transform: translateY(-100vh);
+        height: 30vh;
+        transform: translateY(100vh);
     }
 }
+
 .nav-item {
     color: #444;
     padding: 1rem;
@@ -156,4 +174,4 @@ main {
 
     .nav-link:hover {
         background-color: #555;
-    }   
+    }

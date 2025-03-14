@@ -9,13 +9,9 @@
 	</div>
 
 	<main>
-		<div class="top-row">
-			<button class="navbar-toggler" type="button" id="hamburger-menu" aria-label="Toggle navigation" onclick="toggleNavMenu()">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-
-			<div class="title clickable" @onclick="() => ReloadUi()">pWallet</div>
-		</div>
+		<button class="navbar-toggler" type="button" id="hamburger-menu" aria-label="Toggle navigation" onclick="toggleNavMenu()">
+			<span class="navbar-toggler-icon"></span>
+		</button>
 
 		<article class="content" onclick="closeNavMenu(event)">
 			@Body

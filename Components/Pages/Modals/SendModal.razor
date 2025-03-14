@@ -19,9 +19,9 @@
         <div class="button-row">
             @if (string.IsNullOrWhiteSpace(_inputData))
             {
-                <button class="btn btn-outline-info" @onclick="PasteClipboard">
+                @* <button class="btn btn-outline-info" @onclick="PasteClipboard">
                     <span class="bi bi-clipboard me-2"></span> Paste
-                </button>
+                </button> *@
                 <button class="btn btn-outline-secondary" @onclick="ScanQrCode">
                     <span class="bi bi-camera me-2"></span> Scan
                 </button>
