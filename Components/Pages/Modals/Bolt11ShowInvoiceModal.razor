@@ -10,11 +10,11 @@
         <h4 class="modal-title">Invoice</h4>
         @if (_invoice != null)
         {
-            <div style="text-align: center; margin-top: 5px;" class="clickable" @onclick="CopyOfferToClipboard">
+            <div style="text-align: center; margin-top: 5px;" class="">
                 <img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px"/>
             </div>
             <span class="mt-3 mb-1 ms-1"><strong>Amount:</strong> @_invoice.AmountSat <span class="bitcoin-orange">sats</span></span>
-            <textarea readonly class="form-control clickable" @onclick="CopyOfferToClipboard">@_invoice.Serialized</textarea>
+            <textarea readonly class="form-control">@_invoice.Serialized</textarea>
             @if (_showCopyMessage)
             {
 	            <span style="color:#ff9900; text-align: center; margin-top:5px;">@_copyMessage</span>
@@ -25,9 +25,9 @@
             <p>Loading invoice...</p>
         }
         <div class="button-row mt-3">
-            <button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
+            @* <button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
                 <span class="bi bi-clipboard me-2"></span> Copy
-            </button>
+            </button> *@
             <button class="btn btn-outline-danger" @onclick="CloseModal">
                 <span class="me-2"></span> Close
             </button>

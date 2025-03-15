@@ -8,228 +8,235 @@
 @inject IClipboard Clipboard
 
 <div class="modal-backdrop" style="display: @(_isVisible ? "flex" : "none")" @onclick="CloseModal">
-    <div class="modal-content" @onclick:stopPropagation>
-        <h4 class="modal-title">Bolt 12 Invoice</h4>
-        @if (_isLoaded)
-        {
-            <span>
-                <strong>Lightning Address: </strong>
-                @if (_isEditingUsername)
-                {
-                    <br />
-                    <div class="input-group input-group-sm mb-3" style="width: 300px;">
-                        <!-- Input field -->
-                        <InputText type="text" class="form-control" @bind-Value="_customUsernameInput" aria-label="Custom username" style="width: 150px;" />
+	<div class="modal-content" @onclick:stopPropagation>
+		<h4 class="modal-title">Bolt 12 Invoice</h4>
+		@if (_isLoaded)
+		{
+			<div>
+				<strong>Lightning Address: </strong>
+				@if (_isEditingUsername)
+				{
+					<br />
+					<div class="input-group input-group-sm" style="width: 300px;">
+						<!-- Input field -->
+						<InputText type="text" class="form-control" @bind-Value="_customUsernameInput" aria-label="Custom username" style="width: 150px;" />
 
-                        <!-- Help text -->
-                        <span class="input-group-text" style="font-size: 14px;">@@@_domainName</span>
+						<!-- Help text -->
+						<span class="input-group-text" style="font-size: 14px;">@@@_domainName</span>
 
-                        <!-- Icons -->
-                        <span class="input-group-text">
-                            <i class="bi bi-check-lg text-success clickable" style="font-size:18px !important;" @onclick="HandleCustomUsernameChange"></i>
-                            <i class="bi bi-x-lg text-danger clickable ms-3" style="font-size:18px !important;" @onclick="() => _isEditingUsername = false"></i>
-                        </span>
-                    </div>
+						<!-- Icons -->
+						<div class="button-row mt-1">
+							<button style="width: 50px; border: 1px solid; border-color: green; border-radius: 10px; padding-top:3px; padding-bottom: 3px;" class="btn btn-outline-secondary" @onclick="HandleCustomUsernameChange">
+								<i class="bi bi-check-lg text-success " style="font-size:18px !important;"></i>
+							</button>
+							<button style="width: 50px; border: 1px solid; border-color: red; border-radius: 10px; padding-top:3px; padding-bottom: 3px;" class="btn btn-outline-danger" @onclick="() => _isEditingUsername = false">
+								<i class="bi bi-x-lg text-danger" style="font-size:18px !important;"></i>
+							</button>
+						</div>
+					</div>
 
-                }
-                else
-                {
-                    <span style="color:#FF9900; font-size:14px;">@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
-                    <span class="ms-2">
-                        <i class="bi bi-pencil text-success clickable ms-2" style="font-size:18px !important;" @onclick="() => _isEditingUsername = true"></i>
-                        @if (_hasCustomAddress)
-                        {
-                            <i class="bi bi-trash text-danger clickable ms-3" style="font-size:18px !important;" @onclick="HandleDeleteCustomUsername"></i>
-                        }
-                    </span>
-                }
-            </span>
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <p class="text-danger" style="font-size: 12px;">@_errorMessage</p>
-            }
-            <div style="text-align: center; margin-top: 20px;" @onclick="CopyOfferToClipboard" class="clickable">
-                <img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
-            </div>
-            @if (_showCopyMessage)
-            {
-                <span style="color:#ff9900; text-align: center; margin-top:5px;">@_copyMessage</span>
-            }
-        }
-        else
-        {
-            <p>Loading...</p>
-        }
+				}
+				else
+				{
+					<span style="color:#FF9900; font-size:14px;"><br/>@Bolt12LightninAddress!.LightningAddress.TrimStart('\u20BF')</span>
+					<div class="button-row">
+						@* <span class="ms-2"> *@
+						<button style="width: 50px; border: 1px solid; border-color: green; border-radius: 10px; padding-top:3px; padding-bottom: 3px;" class="btn btn-outline-secondary" @onclick="() => _isEditingUsername = true">
+							<i class="bi bi-pencil text-success  ms-2" style="font-size:18px !important;" >
 
-        <div class="button-row mt-3">
-            <button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
+							</i>
+						</button>
+							@if (_hasCustomAddress)
+							{
+							<button style="width: 50px; border: 1px solid; border-color: red; border-radius: 10px; padding-top:3px; padding-bottom: 3px;" class="btn btn-outline-danger" @onclick="HandleDeleteCustomUsername">
+									<i class="bi bi-trash text-danger  ms-3" style="font-size:18px !important;" ></i>
+								</button>
+							}
+						@* </span> *@
+					</div>
+				}
+			</div>
+			@if (!string.IsNullOrEmpty(_errorMessage))
+			{
+				<p class="text-danger" style="font-size: 12px;">@_errorMessage</p>
+			}
+			<div style="text-align: center; margin-top: 5px;" class="">
+				<img src="data:image/png;base64,@_qrCodeBase64" alt="QR Code" width="300px" />
+			</div>
+			<textarea readonly class="form-control">@Bolt12Offer.Offer</textarea>
+			@if (_showCopyMessage)
+			{
+				<span style="color:#ff9900; text-align: center; margin-top:5px;">@_copyMessage</span>
+			}
+		}
+		else
+		{
+			<p>Loading...</p>
+		}
+
+		<div class="button-row mt-3">
+			@* <button class="btn btn-outline-info" @onclick="CopyOfferToClipboard">
                 <span class="bi bi-clipboard me-2"></span> Copy
-            </button>
-            <button class="btn btn-outline-danger" @onclick="CloseModal">
-                <span class="me-2"></span> Close
-            </button>
-        </div>
-    </div>
+            </button> *@
+			<button class="btn btn-outline-danger" @onclick="CloseModal">
+				<span class="me-2"></span> Close
+			</button>
+		</div>
+	</div>
 </div>
 
 @code {
-    private string _copyMessage = "Copied to clipboard";
-    private bool _showCopyMessage = false;
-    private string _domainName = string.Empty;
-    private string _customUsername = string.Empty;
-    private string _customUsernameInput = string.Empty;
-    private bool _hasCustomAddress = false;
-    private bool _isEditingUsername = false;
-    private string _errorMessage = string.Empty;
-    private bool _isVisible;
-    private bool _isLoaded;
-    private string? _qrCodeBase64 = string.Empty;
-    public GetBolt12OfferResponse? Bolt12Offer { get; set; } = new();
-    public GetLightningAddressResponse? Bolt12LightninAddress { get; set; } = new();
+	private string _copyMessage = "Copied to clipboard";
+	private bool _showCopyMessage = false;
+	private string _domainName = string.Empty;
+	private string _customUsername = string.Empty;
+	private string _customUsernameInput = string.Empty;
+	private bool _hasCustomAddress = false;
+	private bool _isEditingUsername = false;
+	private string _errorMessage = string.Empty;
+	private bool _isVisible;
+	private bool _isLoaded;
+	private string? _qrCodeBase64 = string.Empty;
+	public GetBolt12OfferResponse? Bolt12Offer { get; set; } = new();
+	public GetLightningAddressResponse? Bolt12LightninAddress { get; set; } = new();
 
-    [Inject] public QrService QrService { get; set; } = default!;
+	[Inject] public QrService QrService { get; set; } = default!;
 
-    public bool IsVisible => _isVisible;
+	public bool IsVisible => _isVisible;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        _domainName = await CloudflareDns.GetDomainNameAsync();
-        await CheckForExistingRecord();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		_domainName = await CloudflareDns.GetDomainNameAsync();
+		await CheckForExistingRecord();
+	}
 
-    // Update the LightningAddress to use the dynamic domain name
-    private async Task CheckForExistingRecord()
-    {
-        if (Bolt12Offer != null && !string.IsNullOrEmpty(Bolt12Offer.Offer))
-        {
-            var existingUsername = await CloudflareDns.FindRecordNameByContent(Bolt12Offer.Offer);
-            if (!string.IsNullOrEmpty(existingUsername))
-            {
-                _customUsername = existingUsername;
-                _hasCustomAddress = true;
-                Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
-            }
-        }
-    }
+	private async Task CheckForExistingRecord()
+	{
+		if (Bolt12Offer != null && !string.IsNullOrEmpty(Bolt12Offer.Offer))
+		{
+			var existingUsername = await CloudflareDns.FindRecordNameByContent(Bolt12Offer.Offer);
+			if (!string.IsNullOrEmpty(existingUsername))
+			{
+				_customUsername = existingUsername;
+				_hasCustomAddress = true;
+				Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
+			}
+		}
+	}
 
-    public async Task Show()
-    {
-        _isVisible = true;
-        Bolt12Offer = await PhoenixService.GetBolt12OfferAsync();
-        Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+	public async Task Show()
+	{
+		_isVisible = true;
+		Bolt12Offer = await PhoenixService.GetBolt12OfferAsync();
+		Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
 
-        await CheckForExistingRecord();
+		await CheckForExistingRecord();
 
-        _qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer!.Offer);
-        _isLoaded = true;
+		_qrCodeBase64 = QrService.GenerateQrCodeBase64(Bolt12Offer!.Offer);
+		_isLoaded = true;
 
-        StateHasChanged();
-    }
+		StateHasChanged();
+	}
 
-    public void CloseModal()
-    {
-        _isVisible = false;
-        StateHasChanged();
-    }
+	public void CloseModal()
+	{
+		_isVisible = false;
+		StateHasChanged();
+	}
 
-    private async Task CopyOfferToClipboard()
-    {
-        try
-        {
-            if (Bolt12Offer != null && !string.IsNullOrWhiteSpace(Bolt12Offer.Offer))
-            {
-                await Clipboard.SetTextAsync(Bolt12Offer.Offer);
-                _showCopyMessage = true;
-                await Task.Delay(1500);
-                _showCopyMessage = false;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error copying Bolt12 offer to clipboard: {ex.Message}");
-        }
-    }
+	// private async Task CopyOfferToClipboard()
+	// {
+	//     try
+	//     {
+	//         if (Bolt12Offer != null && !string.IsNullOrWhiteSpace(Bolt12Offer.Offer))
+	//         {
+	//             await Clipboard.SetTextAsync(Bolt12Offer.Offer);
+	//             _showCopyMessage = true;
+	//             await Task.Delay(1500);
+	//             _showCopyMessage = false;
+	//         }
+	//     }
+	//     catch (Exception ex)
+	//     {
+	//         Console.WriteLine($"Error copying Bolt12 offer to clipboard: {ex.Message}");
+	//     }
+	// }
 
-    private async Task CopyAddressToClipboard()
-    {
-        if (!string.IsNullOrWhiteSpace(Bolt12LightninAddress?.LightningAddress))
-        {
-            await Clipboard.SetTextAsync(Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
-            _showCopyMessage = true;
-            await Task.Delay(1500);
-            _showCopyMessage = false;
-        }
-    }
+	private async Task CopyAddressToClipboard()
+	{
+		if (!string.IsNullOrWhiteSpace(Bolt12LightninAddress?.LightningAddress))
+		{
+			await Clipboard.SetTextAsync(Bolt12LightninAddress?.LightningAddress.TrimStart('\u20BF'));
+			_showCopyMessage = true;
+			await Task.Delay(1500);
+			_showCopyMessage = false;
+		}
+	}
 
-    private async Task HandleCustomUsernameChange()
-    {
-        _errorMessage = string.Empty;
+	private async Task HandleCustomUsernameChange()
+	{
+		_errorMessage = string.Empty;
 
-        // Store the old username before updating _customUsername
-        var oldUsername = _customUsername.ToLowerInvariant(); // This is the current custom address (e.g., hodladi)
-        var newUsername = _customUsernameInput.ToLowerInvariant(); // This is the new custom address entered by the user (e.g., test)
+		var oldUsername = _customUsername.ToLowerInvariant();
+		var newUsername = _customUsernameInput.ToLowerInvariant();
 
-        // Step 1: Check if the new name is available
-        var recordExists = await CloudflareDns.CheckIfRecordExists(newUsername);
-        if (recordExists)
-        {
-            _errorMessage = "This username is already in use.";
-            return;
-        }
+		var recordExists = await CloudflareDns.CheckIfRecordExists(newUsername);
+		if (recordExists)
+		{
+			_errorMessage = "This username is already in use.";
+			return;
+		}
 
-        // Step 2: Delete the old record if it exists
-        if (_hasCustomAddress)
-        {
-            Console.WriteLine($"Attempting to delete old DNS record: {oldUsername}");
-            var deleteSuccess = await CloudflareDns.DeleteDnsRecord(oldUsername, Bolt12Offer!.Offer); // Use oldUsername here
-            if (!deleteSuccess)
-            {
-                _errorMessage = "Failed to remove old custom address. Please try again.";
-                return;
-            }
-            Console.WriteLine($"Successfully deleted old DNS record: {oldUsername}");
-        }
+		if (_hasCustomAddress)
+		{
+			Console.WriteLine($"Attempting to delete old DNS record: {oldUsername}");
+			var deleteSuccess = await CloudflareDns.DeleteDnsRecord(oldUsername, Bolt12Offer!.Offer);
+			if (!deleteSuccess)
+			{
+				_errorMessage = "Failed to remove old custom address. Please try again.";
+				return;
+			}
+			Console.WriteLine($"Successfully deleted old DNS record: {oldUsername}");
+		}
 
-        // Step 3: Add the new record
-        Console.WriteLine($"Attempting to add new DNS record: {newUsername}");
-        var recordId = await CloudflareDns.AddTxtRecord(newUsername, Bolt12Offer!.Offer);
-        if (!string.IsNullOrEmpty(recordId))
-        {
-            // Update state with the new custom address
-            _hasCustomAddress = true;
-            _customUsername = newUsername; // Update _customUsername to reflect the new name
-            Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
-            _isEditingUsername = false;
-            Console.WriteLine($"Successfully added new DNS record: {newUsername}");
-        }
-        else
-        {
-            _errorMessage = "Failed to create DNS record. Please try again.";
-            return;
-        }
+		Console.WriteLine($"Attempting to add new DNS record: {newUsername}");
+		var recordId = await CloudflareDns.AddTxtRecord(newUsername, Bolt12Offer!.Offer);
+		if (!string.IsNullOrEmpty(recordId))
+		{
+			_hasCustomAddress = true;
+			_customUsername = newUsername;
+			Bolt12LightninAddress!.LightningAddress = $"{_customUsername}@{_domainName}";
+			_isEditingUsername = false;
+			Console.WriteLine($"Successfully added new DNS record: {newUsername}");
+		}
+		else
+		{
+			_errorMessage = "Failed to create DNS record. Please try again.";
+			return;
+		}
 
-        StateHasChanged();
-    }
+		StateHasChanged();
+	}
 
-    private async Task HandleDeleteCustomUsername()
-    {
-        if (_hasCustomAddress && Bolt12Offer != null)
-        {
-            var success = await CloudflareDns.DeleteDnsRecord(_customUsername, Bolt12Offer.Offer);
-            if (success)
-            {
-                _hasCustomAddress = false;
-                _customUsername = string.Empty;
-                Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
-                _errorMessage = "Custom address removed successfully.";
-            }
-            else
-            {
-                _errorMessage = "Failed to remove custom address. Please try again.";
-            }
-            StateHasChanged();
-        }
-        StateHasChanged();
-    }
+	private async Task HandleDeleteCustomUsername()
+	{
+		if (_hasCustomAddress && Bolt12Offer != null)
+		{
+			var success = await CloudflareDns.DeleteDnsRecord(_customUsername, Bolt12Offer.Offer);
+			if (success)
+			{
+				_hasCustomAddress = false;
+				_customUsername = string.Empty;
+				Bolt12LightninAddress = await PhoenixService.GetLightningAddressAsync();
+				_errorMessage = "Custom address removed successfully.";
+			}
+			else
+			{
+				_errorMessage = "Failed to remove custom address. Please try again.";
+			}
+			StateHasChanged();
+		}
+		StateHasChanged();
+	}
 }
