@@ -14,12 +14,12 @@ namespace pWallet.Services
 
 		public async Task<string?> GetApiUrlAsync()
 		{
-			return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "apiUrl");
+			return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "apiUrl");
 		}
 
 		public async Task<string?> GetApiPasswordAsync()
 		{
-			return await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "apiPassword");
+			return await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "apiPassword");
 		}
 
 		public async Task<string> GetNormalizedApiUrlAsync()

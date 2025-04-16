@@ -44,8 +44,8 @@ else
     {
         if (firstRender)
         {
-            ApiUrl = await JsRuntime.InvokeAsync<string>("localStorage.getItem", new object[] { "apiUrl" });
-            ApiPassword = await JsRuntime.InvokeAsync<string>("localStorage.getItem", new object[] { "apiPassword" });
+            ApiUrl = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", new object[] { "apiUrl" });
+            ApiPassword = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", new object[] { "apiPassword" });
 
             IsLoading = false;
             StateHasChanged();
@@ -54,16 +54,16 @@ else
 
     private async Task SaveConfiguration()
     {
-        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "apiUrl", ApiUrl);
-        await JsRuntime.InvokeVoidAsync("localStorage.setItem", "apiPassword", ApiPassword);
+        await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "apiUrl", ApiUrl);
+        await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "apiPassword", ApiPassword);
 
         NavigationManager.NavigateTo("/", true);
     }
 
     private async Task ResetConfiguration()
     {
-        await JsRuntime.InvokeVoidAsync("localStorage.removeItem", "apiUrl");
-        await JsRuntime.InvokeVoidAsync("localStorage.removeItem", "apiPassword");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "apiUrl");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "apiPassword");
 
         ApiUrl = null;
         ApiPassword = null;
