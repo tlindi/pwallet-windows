@@ -6,7 +6,7 @@ pWallet is a lightweight UI for [Phoenix Server](https://phoenix.acinq.co/server
 
 Make sure you have the following installed on your system:
 
-- [.NET SDK 8.0+](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [.NET SDK 9.0+](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 - [Git](https://git-scm.com/downloads)
 
 ## Setup and Run on Linux, macOS, and Windows
