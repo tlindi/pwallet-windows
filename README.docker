@@ -1,0 +1,15 @@
+# create location for appsettings.json
+cp appsettings.json ~/pWallet
+chgrp docker ~/pWallet/appsettings.json
+chmod g+w ~/pWallet/appsettings.json
+
+# build docker and build app inside of it
+docker build -t pwallet .
+
+# run app
+#
+docker run --user pwallet --rm \
+--name pWallet \
+--publish 3939:3939 \
+--volume ~/pWallet/appsettings.json:/app/appsettings.json \
+pwallet
